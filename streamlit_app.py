@@ -26,8 +26,8 @@ def user_input_features():
 
 # Calculate goal progress
 def calculate_goal_progress(df, goal, interest_rate, years):
-    # Calculate future value of current holdings
-    future_value = df.sum().sum() * (1 + interest_rate)**years
+    # Exclude the 'Week' column when calculating the sum
+    future_value = df.drop(columns=['Week']).sum().sum() * (1 + interest_rate)**years
     # Calculate progress towards goal
     goal_progress = future_value / goal
     return goal_progress

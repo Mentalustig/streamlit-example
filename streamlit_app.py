@@ -1,18 +1,8 @@
-# streamlit_app.py
-
-import pandas as pd
 import streamlit as st
+import pandas as pd
 import matplotlib.pyplot as plt
 
-# Title of the dashboard
-st.title("Mamis Finance Dashboard")
-
-# Hyperlink to direct to the Google Sheet
-google_sheet_url = "https://docs.google.com/spreadsheets/d/1MGyZNI0FjOSYc3SEh3ZTAcjPtipjNU_AAdtqUWzdBsU/edit#gid=0"
-st.markdown(f'[Open Google Sheet]({google_sheet_url})', unsafe_allow_html=True)
-
 # Read in data from the Google Sheet.
-# Uses st.cache_data to only rerun when the query changes or after 10 min.
 @st.cache_data(ttl=600)
 def load_data(sheets_url):
     csv_url = sheets_url.replace("/edit#gid=", "/export?format=csv&gid=")
@@ -20,35 +10,37 @@ def load_data(sheets_url):
 
 df = load_data(st.secrets["public_gsheets_url"])
 
-# Calculate the sum of money for the last two months
-last_month_sum = df.iloc[-2, 1:].replace('-', '0').replace('€', '', regex=True).replace(',', '', regex=True).astype(float).sum()
-this_month_sum = df.iloc[-1, 1:].replace('-', '0').replace('€', '', regex=True).replace(',', '', regex=True).astype(float).sum()
+# Constants
+GOAL = 800000
 
-# Check if this month's sum is at least 2000 more than last month's sum
-if this_month_sum - last_month_sum >= 2000:
-    st.success("Great! This month's total is at least 2000 more than last month's total! 🎉")
-    st.balloons()
-
-# Print the entire DataFrame as a table.
-st.table(df)
-
-# Slider to adjust years towards the goal
-years = st.slider('Years towards goal:', 1, 50, 10)
-
-# Slider to adjust the expected interest rate
-interest_rate = st.slider('Expected interest rate (%):', 1, 20, 5)
-
-# Calculate the goal progress
+# Current amounts
 investment_amount = float(df.iloc[-1]['Investment Account'])
-goal_progress = investment_amount
-for _ in range(years):
-    goal_progress += goal_progress * (interest_rate / 100)
+house_dellach = float(df.iloc[-1]['House Dellach'])
+savings_account = float(df.iloc[-1]['Bank Account'])
 
-# Plot a doughnut chart to show the progress towards the goal
+# Inputs
+monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 10000, 1000)
+investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
+house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
+savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
+
+# Calculate current and forecasted sum
+current_sum = investment_amount + house_dellach + savings_account
+forecasted_sum = current_sum
+for _ in range(12): # 12 months forecast
+    forecasted_sum += monthly_investment_forecast
+    forecasted_sum *= (1 + (investment_interest_rate + house_dellach_interest_rate + savings_account_interest_rate) / 100 / 12)
+
+# Plotting
 fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
-data = [goal_progress, 1000000 - goal_progress] # Assuming the goal is 1,000,000
-labels = ['Progress', 'Remaining']
-wedges, texts, autotexts = ax.pie(data, labels=labels, autopct='%1.1f%%', startangle=90, wedgeprops=dict(width=0.3))
-plt.legend(wedges, labels, title="Goal", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
+
+data = [current_sum / GOAL * 100, forecasted_sum / GOAL * 100]
+labels = ["Current %", "Forecasted %"]
+
+wedges, texts, autotexts = ax.pie(data, autopct='%1.1f%%', textprops=dict(color="w"))
+
+ax.legend(wedges, labels, title="Status", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
+
 plt.setp(autotexts, size=10, weight="bold")
+
 st.pyplot(fig)

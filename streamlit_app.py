@@ -59,7 +59,8 @@ df['Total'] = df[['Bank Account', 'Investment Account', 'Inheritance', 'House De
 forecasted_row = df.iloc[-1].copy()
 forecasted_row['Week'] += pd.DateOffset(years=years_forecast)
 forecasted_row[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']] = forecasted_data[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']]
-df = df.append(forecasted_row, ignore_index=True)
+forecasted_df = pd.DataFrame([forecasted_row])  # Create a DataFrame with the new row
+df = pd.concat([df, forecasted_df], ignore_index=True)  # Concatenate the existing DataFrame with the new row
 st.area_chart(df.set_index('Week')[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account', 'Inheritance', 'Others']])
 
 # Donut charts

@@ -21,26 +21,23 @@ df = load_data(st.secrets["public_gsheets_url"])
 st.title("Mamis Finance Dashboard")
 st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI0FjOSYc3SEh3ZTAcjPtipjNU_AAdtqUWzdBsU/edit#gid=0)")
 
-# Calculate current and last period's sum for each category
-current_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sort_values()
-last_period_data = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sort_values() if len(df) > 1 else [0] * 6
+# Find current period (last row with data) and previous period
+current_period = df.iloc[-1]
+previous_period = df.iloc[-2] if len(df) > 1 else pd.Series([0] * 7, index=df.columns)
 
-# Transpose the data to have periods as columns and categories as rows
+# Create DataFrame for the stacked bar chart
 stacked_bar_chart_data = pd.DataFrame({
-    'Category': current_data.index,
-    'Last Period': last_period_data.values,
-    'Current Period': current_data.values
-}).set_index('Category').T
+    'Category': current_period.index[1:],  # Exclude the 'Week' column from the categories
+    'Last Period': previous_period.values[1:],  # Exclude the 'Week' value from the previous period
+    'Current Period': current_period.values[1:],  # Exclude the 'Week' value from the current period
+})
 
-# Plot the stacked bar chart with the total and difference
-fig = go.Figure()
-fig.add_trace(go.Bar(x=stacked_bar_chart_data.columns, y=stacked_bar_chart_data.loc['Current Period'], name='Current Period'))
-fig.add_trace(go.Bar(x=stacked_bar_chart_data.columns, y=stacked_bar_chart_data.loc['Last Period'], name='Last Period'))
-fig.update_layout(barmode='group', title_text="Current vs Last Period", xaxis_title="Period", yaxis_title="Amount")
+# Plot the stacked bar chart
+fig = px.bar(stacked_bar_chart_data, x='Category', y=['Last Period', 'Current Period'], barmode='stack')
 st.plotly_chart(fig)
 
 # Success message and balloons
-total_difference = current_data.sum() - last_period_data.sum()
+total_difference = current_period.values[1:].sum() - previous_period.values[1:].sum()
 if total_difference >= 2000:
     st.success(f"Congratulations! This month's money is {total_difference} more than last month's sum.")
     st.balloons()

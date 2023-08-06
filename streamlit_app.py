@@ -1,10 +1,8 @@
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime
-
-# Constants
-GOAL = 800000
 
 # Read in data from the Google Sheet.
 @st.cache_data(ttl=600)
@@ -13,6 +11,9 @@ def load_data(sheets_url):
     df = pd.read_csv(csv_url)
     df['Week'] = pd.to_datetime(df['Week'])
     return df
+
+# Constants
+GOAL = 800000
 
 # Load data
 df = load_data(st.secrets["public_gsheets_url"])
@@ -25,40 +26,50 @@ st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI
 current_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']]
 last_period_data = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']] if len(df) > 1 else [0] * 6
 
-# Stacked Bar chart for current vs last period
-stacked_bar_chart_data = pd.DataFrame({
-    'Category': list(current_data.index),
-    'Last Period': last_period_data.values,
-    'Current Period': current_data.values
-}).melt(id_vars='Category', var_name='Period', value_name='Amount')
+# Calculate the total difference
+total_difference = current_data.sum() - last_period_data.sum()
+st.markdown(f"### Total Difference Between Current and Last Period: ${total_difference:,.2f}")
 
-fig_stacked_bar = px.bar(stacked_bar_chart_data, x='Period', y='Amount', color='Category', barmode='stack', title='Comparison of Last Period vs Current Period')
-st.plotly_chart(fig_stacked_bar)
+# Stacked Bar chart for current vs last period
+bar_chart_data = pd.DataFrame({
+    'Period': ['Last Period', 'Current Period'],
+    'Bank Account': [last_period_data['Bank Account'], current_data['Bank Account']],
+    'Investment Account': [last_period_data['Investment Account'], current_data['Investment Account']],
+    'Inheritance': [last_period_data['Inheritance'], current_data['Inheritance']],
+    'House Dellach': [last_period_data['House Dellach'], current_data['House Dellach']],
+    'Savings Account': [last_period_data['Savings Account'], current_data['Savings Account']],
+    'Others': [last_period_data['Others'], current_data['Others']]
+})
+st.bar_chart(bar_chart_data.set_index('Period'))
 
 # Print data as a table
 st.write(df)
 
 # Inputs (at the end)
-years_forecast = st.slider("Number of Years for Forecast", 1, 30, 5)
+years_forecast = st.slider("Number of Years for Forecast", 1, 30, 10)
 monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 2000)
 investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
 house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
 savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
 
-# Forecast calculations
-current_sum = current_data.sum()
-forecasted_sum = current_sum + \
+# Forecast calculation
+forecasted_sum = current_data.sum() + \
                  current_data['House Dellach'] * (1 + house_dellach_interest_rate / 100) ** years_forecast + \
                  current_data['Investment Account'] * (1 + investment_interest_rate / 100) ** years_forecast + \
                  monthly_investment_forecast * 12 * (1 + investment_interest_rate / 100) ** years_forecast + \
                  current_data['Savings Account'] * (1 + savings_account_interest_rate / 100) ** years_forecast
 
-# Donut Charts
-fig_donut_current = px.pie(values=[current_sum, GOAL - current_sum], names=['Current', 'Remaining'], hole=0.3, title='Current Goal Progress')
-st.plotly_chart(fig_donut_current)
+# Stacked Area Chart
+df['Total'] = df[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum(axis=1)
+st.area_chart(df.set_index('Week'))
 
-fig_donut_forecast = px.pie(values=[forecasted_sum, GOAL - forecasted_sum], names=['Forecasted', 'Remaining'], hole=0.3, title='Forecasted Goal Progress')
-st.plotly_chart(fig_donut_forecast)
+# Donut chart for current goal progress
+fig1 = go.Figure(data=[go.Pie(labels=['Current', 'Remaining'], values=[current_data.sum(), GOAL - current_data.sum()], hole=.3)])
+st.plotly_chart(fig1)
+
+# Donut chart for forecasted goal progress
+fig2 = go.Figure(data=[go.Pie(labels=['Remaining', 'Forecasted'], values=[GOAL - forecasted_sum, forecasted_sum], hole=.3)])
+st.plotly_chart(fig2)
 
 # Footnote with assumptions and current goal
 st.markdown("---")

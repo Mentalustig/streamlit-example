@@ -41,7 +41,9 @@ def round_to_100(n):
 # Bar chart annotations
 for i, value in enumerate(bar_chart_data['Total Money']):
     value_rounded = round_to_100(value)
-    fig.add_annotation(x=bar_chart_data['Period'].iloc[i], y=value_rounded, text=f"{value_rounded:,.0f}", showarrow=False, font=dict(size=24))
+    fig.add_annotation(x=bar_chart_data['Period'].iloc[i], y=value_rounded / 2, # Adjust the y position to inside the bar
+                       text=f"{value_rounded:,.0f}", showarrow=False, 
+                       font=dict(size=24, color='white')) # Set the text color to white
 
 fig.update_layout(height=300)
 st.plotly_chart(fig)
@@ -74,6 +76,7 @@ fig_stacked_bar = go.Figure(data=[
 
 # Change the bar mode
 fig_stacked_bar.update_layout(barmode='stack')
+fig_stacked_bar.update_layout(height=400)
 st.plotly_chart(fig_stacked_bar)
 
 # Inputs (at the end)

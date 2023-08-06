@@ -33,8 +33,18 @@ stacked_bar_chart_data = pd.DataFrame({
     'Current Period': current_data.values
 }).set_index('Category').T
 
-# Plot the stacked bar chart
-st.bar_chart(stacked_bar_chart_data)
+# Plot the stacked bar chart with the total and difference
+fig = go.Figure()
+for col in stacked_bar_chart_data.columns:
+    fig.add_trace(go.Bar(x=[col], y=[stacked_bar_chart_data[col].values[0]], name=col))
+    total = stacked_bar_chart_data[col].sum()
+    difference = current_data[col] - last_period_data[col]
+    fig.add_annotation(go.layout.Annotation(x=col, y=total + 500, text=f"Total: {total}", showarrow=False))
+    fig.add_annotation(go.layout.Annotation(x=col, y=total + 1000, text=f"Difference: {difference}", showarrow=False))
+
+fig.update_layout(barmode='stack', title_text="Current vs Last Period", xaxis_title="Period", yaxis_title="Amount")
+st.plotly_chart(fig)
+
 # Success message and balloons
 total_difference = current_data.sum() - last_period_data.sum()
 if total_difference >= 2000:
@@ -59,6 +69,12 @@ forecasted_data['Savings Account'] *= (1 + savings_account_interest_rate / 100) 
 forecasted_change = (forecasted_data - current_data).sort_values()
 order_of_categories = forecasted_change.index.tolist()
 
+# Combine historic and forecasted data
+forecasted_row = df.iloc[-1].copy()
+forecasted_row['Week'] += pd.DateOffset(years=years_forecast)
+forecasted_row[order_of_categories] = forecasted_data[order_of_categories]
+df = df.append(forecasted_row, ignore_index=True)
+
 # Plot the stacked area chart with the specified order
 st.area_chart(df.set_index('Week')[order_of_categories])
 
@@ -81,4 +97,4 @@ st.write(df)
 # Footnote with assumptions and current goal
 st.markdown("---")
 st.markdown("**Assumptions and Current Goal:**")
-st.markdown("The current goal is set at $800,000. This amount is based on the estimated monthly living expenses of $3,500 to $")
+st.markdown("The current goal is set at $800,000. This amount is based on the estimated monthly living expenses of $3,500 to 4,500. The forecast and visualizations above are built on the assumptions provided through the sliders, reflecting potential investment returns, interest rates, and other financial factors.")

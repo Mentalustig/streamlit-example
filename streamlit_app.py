@@ -1,5 +1,7 @@
 import pandas as pd
 import streamlit as st
+import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime
 
 # Read in data from the Google Sheet.
@@ -30,7 +32,12 @@ stacked_bar_chart_data = pd.DataFrame({
     'Last Period': last_period_data,
     'Current Period': current_data
 })
-st.bar_chart(stacked_bar_chart_data.set_index('Category'))
+fig_stacked_bar = go.Figure(data=[
+    go.Bar(name='Last Period', x=stacked_bar_chart_data['Category'], y=stacked_bar_chart_data['Last Period']),
+    go.Bar(name='Current Period', x=stacked_bar_chart_data['Category'], y=stacked_bar_chart_data['Current Period'])
+])
+fig_stacked_bar.update_layout(barmode='stack', title='Comparison of Current and Last Period')
+st.plotly_chart(fig_stacked_bar)
 
 # Calculate current and last period's total sum
 current_sum = current_data.sum()
@@ -47,7 +54,20 @@ st.write(df)
 
 # Stacked Area Chart
 df['Total'] = df[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum(axis=1)
-st.area_chart(df.set_index('Week')['Total'], use_container_width=True)
+fig_area_chart = px.area(df, x='Week', y='Total', title='Financial Progress')
+fig_area_chart.update_yaxes(range=[0, 1000000])  # Set y-axis limit to 1 million
+st.plotly_chart(fig_area_chart)
+
+# Donut chart for current goal progress
+fig1 = px.pie(values=[current_sum, GOAL - current_sum], names=['Current', 'Remaining'], hole=0.3)
+fig1.update_layout(title='Current Goal Progress')
+st.plotly_chart(fig1)
+
+# Donut chart for forecasted goal progress (you can replace forecasted_sum with the actual forecasted value)
+forecasted_sum = current_sum  # Replace with actual forecasted value
+fig2 = px.pie(values=[forecasted_sum, GOAL - forecasted_sum], names=['Forecasted', 'Remaining'], hole=0.3)
+fig2.update_layout(title='Forecasted Goal Progress')
+st.plotly_chart(fig2)
 
 # Inputs (at the end)
 years_forecast = st.slider("Number of Years for Forecast", 1, 30, 5)

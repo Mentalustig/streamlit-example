@@ -143,9 +143,8 @@ fig_donut_current.update_layout(title_text="Current Year", height=350, width=350
 # Forecasted Year Donut
 forecasted_values = [forecasted_data, max(0, GOAL - forecasted_data)]
 forecasted_labels = ['What I own', 'Remaining']
-fig_donut_forecasted = go.Figure(data=[go.Pie(values=forecasted_values, labels=forecasted_labels, hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=0, direction='clockwise')])
+fig_donut_forecasted = go.Figure(data=[go.Pie(values=forecasted_values, labels=forecasted_labels, hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=0, direction='counterclockwise')])
 fig_donut_forecasted.update_layout(title_text="Forecasted Year", height=350, width=350)
-
 
 # Display donuts side by side
 col1, col2 = st.columns(2)

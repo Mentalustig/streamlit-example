@@ -73,6 +73,7 @@ investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
 house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
 savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
 
+
 # Forecasted data for each year
 forecasted_data = df.iloc[-1].copy()
 for i in range(years_forecast):
@@ -83,9 +84,8 @@ for i in range(years_forecast):
     forecasted_data['Bank Account'] = forecasted_data['Bank Account']
     forecasted_data['Others'] = forecasted_data['Others']
     forecasted_data['Inheritance'] = forecasted_data['Inheritance']
-    # Wrap forecasted_data in a list before appending
-    df = df.append([forecasted_data], ignore_index=True)
-
+    # Create a new DataFrame from forecasted_data and concatenate it with df
+    df = pd.concat([df, pd.DataFrame([forecasted_data])], ignore_index=True)
 
 
 # Stacked Area Chart

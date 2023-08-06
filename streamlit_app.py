@@ -8,7 +8,7 @@ st.title("Mamis Finance Dashboard")
 
 # Button to direct to the Google Sheet
 google_sheet_url = "https://docs.google.com/spreadsheets/d/1MGyZNI0FjOSYc3SEh3ZTAcjPtipjNU_AAdtqUWzdBsU/edit#gid=0"
-if st.button("Open Google Sheet"):
+if st.button("Aktualisiere deine Finanzdaten"):
     st.markdown(f'<a href="{google_sheet_url}" target="_blank">Click here to open the Google Sheet</a>', unsafe_allow_html=True)
 
 # Read in data from the Google Sheet.

@@ -24,8 +24,12 @@ st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI
 # Print data as a table
 st.write(df)
 
+# Calculate current and last period's sum
+current_sum = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
+last_period_sum = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum() if len(df) > 1 else 0
+
 # Success message and balloons
-if forecasted_sum - current_sum >= 2000:
+if current_sum - last_period_sum >= 2000:
     st.success("Congratulations! This month's money is at least 2000 more than last month's sum.")
     st.balloons()
 

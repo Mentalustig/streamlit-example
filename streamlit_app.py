@@ -40,15 +40,30 @@ if total_difference >= 2000:
     st.success(f"Congratulations! This month's money is {total_difference} more than last month's sum.")
     st.balloons()
 
-# Stacked bar chart for current vs last period
 stacked_bar_data = pd.DataFrame({
-    'Category': ['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others'],
-    'Last Period': df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']],
-    'Current Period': df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']]
-}).melt(id_vars=['Category'], var_name='Period', value_name='Value')
+    'Period': ['Last Period', 'Current Period'],
+    'Bank Account': [df.iloc[-2]['Bank Account'], df.iloc[-1]['Bank Account']],
+    'Investment Account': [df.iloc[-2]['Investment Account'], df.iloc[-1]['Investment Account']],
+    'Inheritance': [df.iloc[-2]['Inheritance'], df.iloc[-1]['Inheritance']],
+    'House Dellach': [df.iloc[-2]['House Dellach'], df.iloc[-1]['House Dellach']],
+    'Savings Account': [df.iloc[-2]['Savings Account'], df.iloc[-1]['Savings Account']],
+    'Others': [df.iloc[-2]['Others'], df.iloc[-1]['Others']]
+})
 
-fig_stacked_bar = px.bar(stacked_bar_data, x='Category', y='Value', color='Period', barmode='stack')
+fig_stacked_bar = go.Figure(data=[
+    go.Bar(name='Bank Account', x=stacked_bar_data['Period'], y=stacked_bar_data['Bank Account']),
+    go.Bar(name='Investment Account', x=stacked_bar_data['Period'], y=stacked_bar_data['Investment Account']),
+    go.Bar(name='Inheritance', x=stacked_bar_data['Period'], y=stacked_bar_data['Inheritance']),
+    go.Bar(name='House Dellach', x=stacked_bar_data['Period'], y=stacked_bar_data['House Dellach']),
+    go.Bar(name='Savings Account', x=stacked_bar_data['Period'], y=stacked_bar_data['Savings Account']),
+    go.Bar(name='Others', x=stacked_bar_data['Period'], y=stacked_bar_data['Others']),
+])
+
+# Change the bar mode
+fig_stacked_bar.update_layout(barmode='stack')
+
 st.plotly_chart(fig_stacked_bar)
+
 
 
 # Inputs (at the end)
@@ -58,11 +73,15 @@ investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
 house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
 savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
 
-# Forecasted data
-forecasted_data = current_data.copy()
-forecasted_data['Investment Account'] = forecasted_data['Investment Account'] * (1 + investment_interest_rate / 100 / 12) + monthly_investment_forecast * 12
-forecasted_data['House Dellach'] = forecasted_data['House Dellach'] * (1 + house_dellach_interest_rate / 100 / 12)
-forecasted_data['Savings Account'] = forecasted_data['Savings Account'] * (1 + savings_account_interest_rate / 100 / 12)
+# Forecasted data for each year
+forecasted_data = df.iloc[-1].copy()
+for i in range(years_forecast):
+    forecasted_data['Investment Account'] = forecasted_data['Investment Account'] * (1 + investment_interest_rate / 100) + monthly_investment_forecast * 12
+    forecasted_data['House Dellach'] = forecasted_data['House Dellach'] * (1 + house_dellach_interest_rate / 100)
+    forecasted_data['Savings Account'] = forecasted_data['Savings Account'] * (1 + savings_account_interest_rate / 100)
+    forecasted_data['Week'] += pd.DateOffset(years=1)
+    df = df.append(forecasted_data, ignore_index=True)
+
 
 # Stacked Area Chart
 df['Total'] = df[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum(axis=1)

@@ -62,9 +62,7 @@ fig_stacked_bar = go.Figure(data=[
 
 # Change the bar mode
 fig_stacked_bar.update_layout(barmode='stack')
-
 st.plotly_chart(fig_stacked_bar)
-
 
 # Inputs (at the end)
 years_forecast = st.slider("Number of Years for Forecast", 1, 30, 10)
@@ -90,8 +88,8 @@ for i in range(years_forecast):
     df = pd.concat([df, forecasted_row_series.to_frame().T], ignore_index=True)
 
 
-# Assuming 'Week' is in datetime format
-df['Week'] = pd.to_datetime(df['Week'])
+st.write(df.head())
+
 
 # Setting 'Week' as the index
 df.set_index('Week', inplace=True)

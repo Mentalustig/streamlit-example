@@ -87,38 +87,26 @@ for i in range(years_forecast):
     forecasted_row_series = pd.Series(forecasted_data)
     df = pd.concat([df, forecasted_row_series.to_frame().T], ignore_index=True)
 
+# Convert columns to numerical data
+for col in df.columns[1:]:
+    df[col] = df[col].replace(',', '', regex=True).astype(float)
 
-st.write(df.head())
+# Create a stacked area chart
+fig_area_chart = px.area(df, x='Week', y=df.columns[1:], title='Stacked Area Chart')
+st.plotly_chart(fig_area_chart)
 
-
-# Setting 'Week' as the index
-df.set_index('Week', inplace=True)
-
-# Plotting the stacked area chart
-fig, ax = plt.subplots(figsize=(10, 6))
-df.plot.area(ax=ax, alpha=0.4)
-plt.title('Stacked Area Chart for Historical and Forecasted Data')
-plt.xlabel('Time Period')
-plt.ylabel('Value')
-plt.legend(title='Categories', loc='center left', bbox_to_anchor=(1.0, 0.5))
-plt.show()
-
-# Assuming 'current_data' is the sum of all categories for the current year
-current_data = df.iloc[-1].drop('Week').sum()
-GOAL = 500000  # Set your goal here
+# Get current data and forecasted data
+current_data = df.iloc[-1, 1:].sum()
+forecasted_data = df.iloc[-years_forecast-1, 1:].sum() # Assuming `years_forecast` is the number of forecasted years
 
 # Current Year Donut
-current_sum = current_data
 current_remaining = GOAL - current_data
-fig_donut_current = go.Figure(data=[go.Pie(values=[current_sum, current_remaining], labels=['Current', 'Remaining'], hole=.3)])
+fig_donut_current = go.Figure(data=[go.Pie(values=[current_data, current_remaining], labels=['Current', 'Remaining'], hole=.3)])
 fig_donut_current.update_layout(title_text="Current Year")
 
 # Forecasted Year Donut
-# Assuming 'forecasted_data' is the last row of the forecast
-forecasted_data = df.iloc[-1].drop('Week')
-forecasted_sum = forecasted_data.sum()
-forecasted_remaining = GOAL - forecasted_data.sum()
-fig_donut_forecasted = go.Figure(data=[go.Pie(values=[forecasted_sum, forecasted_remaining], labels=['Forecasted', 'Remaining'], hole=.3)])
+forecasted_remaining = GOAL - forecasted_data
+fig_donut_forecasted = go.Figure(data=[go.Pie(values=[forecasted_data, forecasted_remaining], labels=['Forecasted', 'Remaining'], hole=.3)])
 fig_donut_forecasted.update_layout(title_text="Forecasted Year")
 
 # Display donuts side by side

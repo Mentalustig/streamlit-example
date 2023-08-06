@@ -33,6 +33,11 @@ bar_chart_data = pd.DataFrame({
     'Total Money': [last_period_data, current_data]
 })
 fig = px.bar(bar_chart_data, x='Period', y='Total Money', labels={'Total Money': 'Total Money (Sum of all Categories)'}, barmode='group')
+
+# Add annotations for total sum
+for i, value in enumerate(bar_chart_data['Total Money']):
+    fig.add_annotation(x=bar_chart_data['Period'].iloc[i], y=value, text=f"{value:,}", showarrow=False)
+
 st.plotly_chart(fig)
 
 # Success message and balloons
@@ -59,6 +64,13 @@ fig_stacked_bar = go.Figure(data=[
     go.Bar(name='Savings Account', x=stacked_bar_data['Period'], y=stacked_bar_data['Savings Account']),
     go.Bar(name='Others', x=stacked_bar_data['Period'], y=stacked_bar_data['Others']),
 ])
+
+# Add annotations for each category at the top of the corresponding section
+for col in stacked_bar_data.columns[1:]:
+    for period_idx, period in enumerate(stacked_bar_data['Period']):
+        value = stacked_bar_data[col].iloc[period_idx]
+        if value != 0:
+            fig_stacked_bar.add_annotation(x=period, y=value/2, text=f"{value:,}", showarrow=False)
 
 # Change the bar mode
 fig_stacked_bar.update_layout(barmode='stack')
@@ -93,23 +105,36 @@ for col in df.columns[1:]:
 
 # Create a stacked area chart
 fig_area_chart = px.area(df, x='Week', y=df.columns[1:], title='Stacked Area Chart')
+
+# Extracting every second year from the DataFrame
+df['Year'] = pd.to_datetime(df['Week']).dt.year
+every_second_year = df[df['Year'] % 2 == 0]
+
+# Adding annotations for every second year
+for index, row in every_second_year.iterrows():
+    # Calculate the total sum for the current row
+    total_sum = row[1:].sum()
+    # Add an annotation at the corresponding X value with the total sum
+    fig_area_chart.add_annotation(x=row['Week'], y=total_sum, text=f"{total_sum:,}", showarrow=False)
+
 st.plotly_chart(fig_area_chart)
 
 # Get forecasted data
 forecasted_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
 
+# Define the colors
+dark_blue = 'rgb(0, 51, 204)'
+light_blue = 'rgb(153, 204, 255)'
+
 # Current Year Donut
 current_remaining = GOAL - current_data
-fig_donut_current = go.Figure(data=[go.Pie(values=[current_data, current_remaining], labels=['Current', 'Remaining'], hole=.3)])
-fig_donut_current.update_layout(title_text="Current Year")
+fig_donut_current = go.Figure(data=[go.Pie(values=[current_data, current_remaining], labels=['Current', 'Remaining'], hole=.3, marker=dict(colors=[dark_blue, light_blue]))])
+fig_donut_current.update_layout(title_text="Current Year", height=350, width=350)
 
 # Forecasted Year Donut
 forecasted_remaining = GOAL - forecasted_data
-fig_donut_forecasted = go.Figure(data=[go.Pie(values=[forecasted_data, forecasted_remaining], labels=['Forecasted', 'Remaining'], hole=.3)])
-fig_donut_forecasted.update_layout(title_text="Forecasted Year")
-
-fig_donut_current.update_layout(height=350, width=350)
-fig_donut_forecasted.update_layout(height=350, width=350)
+fig_donut_forecasted = go.Figure(data=[go.Pie(values=[forecasted_data, forecasted_remaining], labels=['Forecasted', 'Remaining'], hole=.3, marker=dict(colors=[dark_blue, light_blue]))])
+fig_donut_forecasted.update_layout(title_text="Forecasted Year", height=350, width=350)
 
 # Display donuts side by side
 col1, col2 = st.columns(2)

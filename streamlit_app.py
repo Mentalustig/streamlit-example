@@ -1,6 +1,5 @@
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
 from datetime import datetime
 
 # Read in data from the Google Sheet.
@@ -33,8 +32,22 @@ stacked_bar_chart_data = pd.DataFrame({
 })
 st.bar_chart(stacked_bar_chart_data.set_index('Category'))
 
+# Calculate current and last period's total sum
+current_sum = current_data.sum()
+last_period_sum = last_period_data.sum()
+
+# Success message and balloons
+difference = current_sum - last_period_sum
+if difference >= 2000:
+    st.success(f"Congratulations! This month's money is {difference} more than last month's sum.")
+    st.balloons()
+
 # Print data as a table
 st.write(df)
+
+# Stacked Area Chart
+df['Total'] = df[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum(axis=1)
+st.area_chart(df.set_index('Week')['Total'], use_container_width=True)
 
 # Inputs (at the end)
 years_forecast = st.slider("Number of Years for Forecast", 1, 30, 5)

@@ -3,6 +3,7 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 # Read in data from the Google Sheet.
 @st.cache_data(ttl=600)
@@ -90,21 +91,23 @@ for i in range(years_forecast):
     df = pd.concat([df, forecasted_row_series.to_frame().T], ignore_index=True)
 
 
-# Stacked Area Chart
-df['Total'] = df[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum(axis=1)
-forecasted_row = df.iloc[-1].copy()
-forecasted_row['Week'] += pd.DateOffset(years=years_forecast)
-forecasted_row[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']] = forecasted_data[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']]
-forecasted_row['Total'] = forecasted_data.sum()
-df = df.append(forecasted_row, ignore_index=True)
+# Assuming 'Week' is in datetime format
+df['Week'] = pd.to_datetime(df['Week'])
 
-# Assign colors to historical and forecast data
-df['Type'] = ['Historical'] * len(df)
-df.loc[df.index[-1], 'Type'] = 'Forecasted'
+# Setting 'Week' as the index
+df.set_index('Week', inplace=True)
 
-# Stacked Area Chart with historical and forecast data
-fig_area = px.area(df, x='Week', y='Total', color='Type', line_group='Type', labels={'Total': 'Total Money (Sum of all Categories)'})
-st.plotly_chart(fig_area)
+# Dropping unnecessary columns if needed, such as 'Total' if it's there
+# df = df.drop(columns=['Total'])
+
+# Plotting the stacked area chart
+fig, ax = plt.subplots(figsize=(10, 6))
+df.plot.area(ax=ax, alpha=0.4)
+plt.title('Stacked Area Chart for Historical and Forecasted Data')
+plt.xlabel('Time Period')
+plt.ylabel('Value')
+plt.legend(title='Categories', loc='center left', bbox_to_anchor=(1.0, 0.5))
+plt.show()
 
 # Current Year Donut
 current_sum = current_data

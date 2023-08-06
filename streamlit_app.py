@@ -63,4 +63,4 @@ st.plotly_chart(fig_donut_forecast)
 # Footnote with assumptions and current goal
 st.markdown("---")
 st.markdown("**Assumptions and Current Goal:**")
-st.markdown("The current goal is set at $800,000. This amount is based on the estimated monthly living expenses of $3,500 to $4,500. The forecast and visualizations above are built on the assumptions provided through the sliders, reflecting potential investment returns, interest rates, and other financial factors
+st.markdown("The current goal is set at $800,000. This amount is based on the estimated monthly living expenses of $3,500 to $4,500. The forecast and visualizations above are built on the assumptions provided through the sliders, reflecting potential investment returns, interest rates, and other financial factors.")

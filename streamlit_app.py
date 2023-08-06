@@ -8,7 +8,7 @@ def load_data(sheets_url):
     csv_url = sheets_url.replace("/edit#gid=", "/export?format=csv&gid=")
     df = pd.read_csv(csv_url)
     # Convert relevant columns to numeric
-    for col in ['Investment Account', 'House Dellach', 'Bank Account']:
+    for col in ['Investment Account', 'House Dellach', 'Bank Account', 'Savings Account']:
         df[col] = pd.to_numeric(df[col], errors='coerce')
     return df
 
@@ -17,6 +17,10 @@ GOAL = 800000
 
 # Load data
 df = load_data(st.secrets["public_gsheets_url"])
+
+# Convert 'Week' to datetime and extract the year
+df['Week'] = pd.to_datetime(df['Week'])
+df['Year'] = df['Week'].dt.year
 
 # Current amounts
 investment_amount = float(df.iloc[-1]['Investment Account'])
@@ -31,7 +35,7 @@ st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI
 monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 1000)
 investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
 house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
-savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 2)
+savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
 
 # Calculate current and forecasted sum
 current_sum = investment_amount + house_dellach + savings_account
@@ -47,21 +51,37 @@ for i in range(12): # 12 months forecast
 
 df['Goal'] = GOAL
 
-st.area_chart(df[['Total', 'Forecast', 'Goal']])
+# Plotting the area chart
+fig, ax = plt.subplots()
+ax.stackplot(df['Year'], df['Total'], df['Forecast'], labels=['Total', 'Forecast'])
+ax.plot(df['Year'], df['Goal'], label='Goal', color='red')
+plt.legend(loc='upper left')
+st.pyplot(fig)
 
 # Success message and balloons
 if forecasted_sum - current_sum >= 2000:
     st.success("Congratulations! This month's money is at least 2000 more than last month's sum.")
     st.balloons()
 
-# Donut chart for goal progress
-fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
-data = [current_sum / GOAL * 100, forecasted_sum / GOAL * 100]
-labels = ['Current %', 'Forecasted %']
-wedges, texts, autotexts = ax.pie(data, autopct='%1.1f%%', textprops=dict(color="w"), startangle=90, wedgeprops=dict(width=0.3))
-ax.legend(wedges, labels, title="Goal Progress", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-plt.setp(autotexts, size=10, weight="bold")
-st.pyplot(fig)
+# ...
+
+# Donut chart for current goal progress
+fig1, ax1 = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
+data1 = [current_sum / GOAL * 100, 100 - current_sum / GOAL * 100]
+labels1 = ['Current %', 'Remaining %']
+wedges1, texts1, autotexts1 = ax1.pie(data1, autopct='%1.1f%%', textprops=dict(color="w"), startangle=90, wedgeprops=dict(width=0.3))
+ax1.legend(wedges1, labels1, title="Current Goal Progress", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
+plt.setp(autotexts1, size=10, weight="bold")
+st.pyplot(fig1)
+
+# Donut chart for forecasted goal progress
+fig2, ax2 = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
+data2 = [forecasted_sum / GOAL * 100, 100 - forecasted_sum / GOAL * 100]
+labels2 = ['Forecasted %', 'Remaining %']
+wedges2, texts2, autotexts2 = ax2.pie(data2, autopct='%1.1f%%', textprops=dict(color="w"), startangle=90, wedgeprops=dict(width=0.3))
+ax2.legend(wedges2, labels2, title="Forecasted Goal Progress", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
+plt.setp(autotexts2, size=10, weight="bold")
+st.pyplot(fig2)
 
 # Print data as a table
 st.write(df)

@@ -66,7 +66,6 @@ fig_stacked_bar.update_layout(barmode='stack')
 st.plotly_chart(fig_stacked_bar)
 
 
-
 # Inputs (at the end)
 years_forecast = st.slider("Number of Years for Forecast", 1, 30, 10)
 monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 2000)
@@ -97,9 +96,6 @@ df['Week'] = pd.to_datetime(df['Week'])
 # Setting 'Week' as the index
 df.set_index('Week', inplace=True)
 
-# Dropping unnecessary columns if needed, such as 'Total' if it's there
-# df = df.drop(columns=['Total'])
-
 # Plotting the stacked area chart
 fig, ax = plt.subplots(figsize=(10, 6))
 df.plot.area(ax=ax, alpha=0.4)
@@ -109,6 +105,10 @@ plt.ylabel('Value')
 plt.legend(title='Categories', loc='center left', bbox_to_anchor=(1.0, 0.5))
 plt.show()
 
+# Assuming 'current_data' is the sum of all categories for the current year
+current_data = df.iloc[-1].drop('Week').sum()
+GOAL = 500000  # Set your goal here
+
 # Current Year Donut
 current_sum = current_data
 current_remaining = GOAL - current_data
@@ -116,6 +116,8 @@ fig_donut_current = go.Figure(data=[go.Pie(values=[current_sum, current_remainin
 fig_donut_current.update_layout(title_text="Current Year")
 
 # Forecasted Year Donut
+# Assuming 'forecasted_data' is the last row of the forecast
+forecasted_data = df.iloc[-1].drop('Week')
 forecasted_sum = forecasted_data.sum()
 forecasted_remaining = GOAL - forecasted_data.sum()
 fig_donut_forecasted = go.Figure(data=[go.Pie(values=[forecasted_sum, forecasted_remaining], labels=['Forecasted', 'Remaining'], hole=.3)])

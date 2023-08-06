@@ -127,13 +127,13 @@ dark_blue = 'rgb(0, 51, 204)'
 light_blue = 'rgb(153, 204, 255)'
 
 # Current Year Donut
-current_percentage = (current_data / GOAL) * 100
+current_percentage = current_data
 current_remaining = max(0, GOAL - current_data)
 fig_donut_current = go.Figure(data=[go.Pie(values=[current_percentage, current_remaining], labels=['What I own', 'Remaining'], hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=90, direction='clockwise')])
 fig_donut_current.update_layout(title_text="Current Year", height=350, width=350)
 
 # Forecasted Year Donut
-forecasted_percentage = (forecasted_data / GOAL) * 100
+forecasted_percentage = forecasted_data
 forecasted_remaining = max(0, GOAL - forecasted_data)
 fig_donut_forecasted = go.Figure(data=[go.Pie(values=[forecasted_percentage, forecasted_remaining], labels=['What I own', 'Remaining'], hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=90, direction='clockwise')])
 fig_donut_forecasted.update_layout(title_text="Forecasted Year", height=350, width=350)

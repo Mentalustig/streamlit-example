@@ -11,5 +11,5 @@ def load_data(sheets_url):
 df = load_data(st.secrets["public_gsheets_url"])
 
 # Print results.
-for row in df.itertuples():
-    st.write(f"{row.Week}: Bank Account = {row._2}, Investment Account = {row._3}, Inheritance = {row._4}, House Dellach = {row._5}, Others = {row._6}")
+for index, row in df.iterrows():
+    st.write(f"{row['Week']}: Bank Account = {row['Bank Account']}, Investment Account = {row['Investment Account']}, Inheritance = {row['Inheritance']}, House Dellach = {row['House Dellach']}, Others = {row['Others']}")

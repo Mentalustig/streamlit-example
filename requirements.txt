@@ -4,3 +4,4 @@ streamlit
 numpy
 math
 datetime
+gsheetsdb

@@ -36,7 +36,7 @@ stacked_bar_chart_data = pd.DataFrame({
 fig = go.Figure()
 fig.add_trace(go.Bar(x=stacked_bar_chart_data.columns, y=stacked_bar_chart_data.loc['Current Period'], name='Current Period'))
 fig.add_trace(go.Bar(x=stacked_bar_chart_data.columns, y=stacked_bar_chart_data.loc['Last Period'], name='Last Period'))
-fig.update_layout(barmode='stack', title_text="Current vs Last Period", xaxis_title="Category", yaxis_title="Amount")
+fig.update_layout(barmode='group', title_text="Current vs Last Period", xaxis_title="Period", yaxis_title="Amount")
 st.plotly_chart(fig)
 
 # Success message and balloons
@@ -66,18 +66,20 @@ order_of_categories = forecasted_change.index.tolist()
 # Combine historic and forecasted data
 forecasted_row = df.iloc[-1].copy()
 forecasted_row['Week'] += pd.DateOffset(years=years_forecast)
-forecasted_row[order_of_categories] = forecasted_data[order_of_categories]
-df = pd.concat([df, forecasted_row], ignore_index=True)
+forecasted_row[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']] = forecasted_data[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']]
+df_forecasted = pd.concat([df, forecasted_row], ignore_index=True)
 
 # Plot the stacked area chart with the specified order
-st.area_chart(df.set_index('Week')[order_of_categories])
+st.area_chart(df_forecasted.set_index('Week')[order_of_categories])
 
 # Current Year Donut
-fig1 = go.Figure(data=[go.Pie(values=[current_data.sum(), GOAL - current_data.sum()], labels=['Current', 'Remaining'], hole=.3)])
+current_remaining = GOAL - current_data.sum()
+fig1 = go.Figure(data=[go.Pie(values=[current_data.sum(), current_remaining], labels=['Current', 'Remaining'], hole=.3)])
 fig1.update_layout(title_text="Current Year")
 
 # Forecasted Year Donut
-fig2 = go.Figure(data=[go.Pie(values=[forecasted_data.sum(), GOAL - forecasted_data.sum()], labels=['Forecasted', 'Remaining'], hole=.3)])
+forecasted_remaining = GOAL - forecasted_data.sum()
+fig2 = go.Figure(data=[go.Pie(values=[forecasted_data.sum(), forecasted_remaining], labels=['Forecasted', 'Remaining'], hole=.3)])
 fig2.update_layout(title_text="Forecasted Year")
 
 # Display donuts side by side
@@ -86,7 +88,7 @@ col1.plotly_chart(fig1)
 col2.plotly_chart(fig2)
 
 # Print data as a table (at the bottom)
-st.write(df)
+st.write(df_forecasted)
 
 # Footnote with assumptions and current goal
 st.markdown("---")

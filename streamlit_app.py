@@ -21,6 +21,14 @@ df = load_data(st.secrets["public_gsheets_url"])
 st.title("Mamis Finance Dashboard")
 st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI0FjOSYc3SEh3ZTAcjPtipjNU_AAdtqUWzdBsU/edit#gid=0)")
 
+# Print data as a table
+st.write(df)
+
+# Success message and balloons
+if forecasted_sum - current_sum >= 2000:
+    st.success("Congratulations! This month's money is at least 2000 more than last month's sum.")
+    st.balloons()
+
 # Inputs
 years_forecast = st.slider("Number of Years for Forecast", 1, 30, 5)
 monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 2000)
@@ -29,11 +37,11 @@ house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10
 savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
 
 # Calculate current and forecasted sum
-current_sum = df.iloc[-1].sum() - df.iloc[-1]['Week']
+current_sum = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
 forecasted_sum = current_sum
 
 # Stacked Area Chart
-df['Total'] = df.sum(axis=1) - df['Week']
+df['Total'] = df[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum(axis=1)
 df['Forecast'] = df['Total']
 
 for i in range(12 * years_forecast): # Forecast for the number of years
@@ -55,11 +63,6 @@ plt.legend()
 plt.title('Financial Progress and Forecast')
 st.pyplot()
 
-# Success message and balloons
-if forecasted_sum - current_sum >= 2000:
-    st.success("Congratulations! This month's money is at least 2000 more than last month's sum.")
-    st.balloons()
-
 # Donut chart for current goal progress
 fig1, ax1 = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
 data1 = [current_sum, GOAL - current_sum]
@@ -78,5 +81,4 @@ ax2.legend(wedges2, labels2, title="Forecasted Goal Progress", loc="center left"
 plt.setp(autotexts2, size=10, weight="bold")
 st.pyplot(fig2)
 
-# Print data as a table
-st.write(df)
+

@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from datetime import datetime
 
 # Read in data from the Google Sheet.
@@ -59,17 +59,27 @@ forecasted_sum = current_data.sum() + \
                  monthly_investment_forecast * 12 * (1 + investment_interest_rate / 100) ** years_forecast + \
                  current_data['Savings Account'] * (1 + savings_account_interest_rate / 100) ** years_forecast
 
+# Forecast calculation for each category
+forecasted_data = current_data.copy()
+forecasted_data['House Dellach'] *= (1 + house_dellach_interest_rate / 100) ** years_forecast
+forecasted_data['Investment Account'] *= (1 + investment_interest_rate / 100) ** years_forecast
+forecasted_data['Investment Account'] += monthly_investment_forecast * 12 * (1 + investment_interest_rate / 100) ** years_forecast
+forecasted_data['Savings Account'] *= (1 + savings_account_interest_rate / 100) ** years_forecast
+
+# Append forecasted data to the DataFrame
+forecasted_row = forecasted_data.append(pd.Series({'Week': df.iloc[-1]['Week'] + pd.DateOffset(years=years_forecast)}))
+df = df.append(forecasted_row, ignore_index=True)
+
 # Stacked Area Chart
-df['Total'] = df[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum(axis=1)
-st.area_chart(df.set_index('Week'))
+st.area_chart(df.set_index('Week')[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']])
 
-# Donut chart for current goal progress
-fig1 = go.Figure(data=[go.Pie(labels=['Current', 'Remaining'], values=[current_data.sum(), GOAL - current_data.sum()], hole=.3)])
-st.plotly_chart(fig1)
-
-# Donut chart for forecasted goal progress
-fig2 = go.Figure(data=[go.Pie(labels=['Remaining', 'Forecasted'], values=[GOAL - forecasted_sum, forecasted_sum], hole=.3)])
-st.plotly_chart(fig2)
+# ... (other code remains the same)
+# Donut charts for current and forecasted goal progress
+fig = make_subplots(rows=1, cols=2, specs=[[{'type':'domain'}, {'type':'domain'}]])
+fig.add_trace(go.Pie(labels=['Current', 'Remaining'], values=[current_data.sum(), GOAL - current_data.sum()], hole=.3), 1, 1)
+fig.add_trace(go.Pie(labels=['Remaining', 'Forecasted'], values=[GOAL - forecasted_sum, forecasted_sum], hole=.3), 1, 2)
+fig.update_traces(marker=dict(colors=['#636EFA', '#EF553B']))  # Set the same color for "Remaining" in both charts
+st.plotly_chart(fig)
 
 # Footnote with assumptions and current goal
 st.markdown("---")

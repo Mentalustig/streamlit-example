@@ -52,8 +52,10 @@ for i in range(12 * years_forecast): # Forecast for the number of years
     forecasted_sum += monthly_investment_forecast
     forecasted_sum *= (1 + (investment_interest_rate + house_dellach_interest_rate + savings_account_interest_rate) / 100 / 12)
     next_date = df.iloc[-1]['Week'] + pd.DateOffset(months=1)
-    new_row = {'Week': next_date, 'Forecast': forecasted_sum}
-    df = df.append(new_row, ignore_index=True)
+    new_row = {'Week': [next_date], 'Forecast': [forecasted_sum]}
+    new_row_df = pd.DataFrame(new_row)
+    new_row_df = new_row_df.reindex(columns=df.columns)  # Align with the existing DataFrame columns
+    df = pd.concat([df, new_row_df], ignore_index=True)
 
 df['Goal'] = GOAL
 

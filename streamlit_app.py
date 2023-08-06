@@ -1,11 +1,10 @@
 import pandas as pd
 import streamlit as st
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import plotly.express as px
 from datetime import datetime
 
 # Read in data from the Google Sheet.
-@st.cache_data(ttl=600)
+@st.cache(ttl=600)
 def load_data(sheets_url):
     csv_url = sheets_url.replace("/edit#gid=", "/export?format=csv&gid=")
     df = pd.read_csv(csv_url)
@@ -14,6 +13,7 @@ def load_data(sheets_url):
 
 # Constants
 GOAL = 800000
+years_forecast = 10
 
 # Load data
 df = load_data(st.secrets["public_gsheets_url"])
@@ -23,41 +23,22 @@ st.title("Mamis Finance Dashboard")
 st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI0FjOSYc3SEh3ZTAcjPtipjNU_AAdtqUWzdBsU/edit#gid=0)")
 
 # Calculate current and last period's sum for each category
-current_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']]
-last_period_data = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']] if len(df) > 1 else [0] * 6
-
-# Calculate the total difference
-total_difference = current_data.sum() - last_period_data.sum()
-st.markdown(f"### Total Difference Between Current and Last Period: ${total_difference:,.2f}")
+current_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sort_values()
+last_period_data = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sort_values() if len(df) > 1 else [0] * 6
 
 # Stacked Bar chart for current vs last period
-bar_chart_data = pd.DataFrame({
-    'Period': ['Last Period', 'Current Period'],
-    'Bank Account': [last_period_data['Bank Account'], current_data['Bank Account']],
-    'Investment Account': [last_period_data['Investment Account'], current_data['Investment Account']],
-    'Inheritance': [last_period_data['Inheritance'], current_data['Inheritance']],
-    'House Dellach': [last_period_data['House Dellach'], current_data['House Dellach']],
-    'Savings Account': [last_period_data['Savings Account'], current_data['Savings Account']],
-    'Others': [last_period_data['Others'], current_data['Others']]
+stacked_bar_chart_data = pd.DataFrame({
+    'Category': current_data.index,
+    'Last Period': last_period_data,
+    'Current Period': current_data
 })
-st.bar_chart(bar_chart_data.set_index('Period'))
+st.bar_chart(stacked_bar_chart_data.set_index('Category'))
 
-# Print data as a table
-st.write(df)
-
-# Inputs (at the end)
-years_forecast = st.slider("Number of Years for Forecast", 1, 30, 10)
-monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 2000)
-investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
-house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
-savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
-
-# Forecast calculation
-forecasted_sum = current_data.sum() + \
-                 current_data['House Dellach'] * (1 + house_dellach_interest_rate / 100) ** years_forecast + \
-                 current_data['Investment Account'] * (1 + investment_interest_rate / 100) ** years_forecast + \
-                 monthly_investment_forecast * 12 * (1 + investment_interest_rate / 100) ** years_forecast + \
-                 current_data['Savings Account'] * (1 + savings_account_interest_rate / 100) ** years_forecast
+# Success message and balloons
+difference = current_data.sum() - last_period_data.sum()
+if difference >= 2000:
+    st.success(f"Congratulations! This month's money is {difference:.2f} more than last month's sum.")
+    st.balloons()
 
 # Forecast calculation for each category
 forecasted_data = current_data.copy()
@@ -67,23 +48,35 @@ forecasted_data['Investment Account'] += monthly_investment_forecast * 12 * (1 +
 forecasted_data['Savings Account'] *= (1 + savings_account_interest_rate / 100) ** years_forecast
 
 # Create a new DataFrame row with forecasted data
-forecasted_row = forecasted_data.to_frame().T
-forecasted_row['Week'] = df.iloc[-1]['Week'] + pd.DateOffset(years=years_forecast)
+forecasted_df = forecasted_data.to_frame().T
+forecasted_df['Week'] = df.iloc[-1]['Week'] + pd.DateOffset(years=years_forecast)
 
 # Append forecasted row to the DataFrame
-df = pd.concat([df, forecasted_row], ignore_index=True)
+df = pd.concat([df, forecasted_df], ignore_index=True)
 
 # Stacked Area Chart
-st.area_chart(df.set_index('Week')[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']])
+st.area_chart(df.set_index('Week')[['Inheritance', 'House Dellach', 'Bank Account', 'Savings Account', 'Investment Account', 'Others']])
 
+# Donut chart for current goal progress
+fig1 = px.pie(values=[current_data.sum(), GOAL - current_data.sum()], names=['Current', 'Remaining'], hole=0.3, title=f"Current Year ({datetime.now().year})")
+fig1.update_traces(textinfo='percent+label', marker=dict(colors=['#1f77b4', '#ff7f0e']))
 
-# ... (other code remains the same)
-# Donut charts for current and forecasted goal progress
-fig = make_subplots(rows=1, cols=2, specs=[[{'type':'domain'}, {'type':'domain'}]])
-fig.add_trace(go.Pie(labels=['Current', 'Remaining'], values=[current_data.sum(), GOAL - current_data.sum()], hole=.3), 1, 1)
-fig.add_trace(go.Pie(labels=['Remaining', 'Forecasted'], values=[GOAL - forecasted_sum, forecasted_sum], hole=.3), 1, 2)
-fig.update_traces(marker=dict(colors=['#636EFA', '#EF553B']))  # Set the same color for "Remaining" in both charts
-st.plotly_chart(fig)
+# Donut chart for forecasted goal progress
+fig2 = px.pie(values=[forecasted_data.sum(), GOAL - forecasted_data.sum()], names=['Forecasted', 'Remaining'], hole=0.3, title=f"Forecasted Year ({datetime.now().year + years_forecast})")
+fig2.update_traces(textinfo='percent+label', marker=dict(colors=['#1f77b4', '#ff7f0e']))
+
+st.plotly_chart(fig1)
+st.plotly_chart(fig2)
+
+# Inputs (at the end)
+years_forecast = st.slider("Number of Years for Forecast", 1, 30, 10)
+monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 2000)
+investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
+house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
+savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
+
+# Print data as a table (at the bottom)
+st.write(df)
 
 # Footnote with assumptions and current goal
 st.markdown("---")

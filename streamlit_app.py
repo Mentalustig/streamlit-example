@@ -43,7 +43,7 @@ for i, value in enumerate(bar_chart_data['Total Money']):
     value_rounded = round_to_100(value)
     fig.add_annotation(x=bar_chart_data['Period'].iloc[i], y=value_rounded, text=f"{value_rounded:,.0f}", showarrow=False, font=dict(size=24))
 
-fig.update_layout(height=200)
+fig.update_layout(height=300)
 st.plotly_chart(fig)
 
 # Success message and balloons

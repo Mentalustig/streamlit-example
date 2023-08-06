@@ -27,11 +27,16 @@ last_period_data = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritan
 st.title("Mamis Finance Dashboard")
 st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI0FjOSYc3SEh3ZTAcjPtipjNU_AAdtqUWzdBsU/edit#gid=0)")
 
+# Extract the actual dates from the last two periods
+last_period_date = df.iloc[-2]['Week'].strftime('%Y-%m-%d')
+current_period_date = df.iloc[-1]['Week'].strftime('%Y-%m-%d')
+
 # Bar chart for current vs last period
 bar_chart_data = pd.DataFrame({
-    'Period': ['Last Period', 'Current Period'],
+    'Period': [last_period_date, current_period_date],
     'Total Money': [last_period_data, current_data]
 })
+
 fig = px.bar(bar_chart_data, x='Period', y='Total Money', labels={'Total Money': 'Total Money (Sum of all Categories)'}, barmode='group')
 
 # Function to round the number to the nearest 100
@@ -130,16 +135,17 @@ dark_blue = 'rgb(0, 51, 204)'
 light_blue = 'rgb(153, 204, 255)'
 
 # Current Year Donut
-current_percentage = current_data
-current_remaining = max(0, GOAL - current_data)
-fig_donut_current = go.Figure(data=[go.Pie(values=[current_percentage, current_remaining], labels=['What I own', 'Remaining'], hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=90, direction='clockwise')])
+current_values = [current_data, max(0, GOAL - current_data)]
+current_labels = ['What I own', 'Remaining']
+fig_donut_current = go.Figure(data=[go.Pie(values=current_values, labels=current_labels, hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=0, direction='clockwise')])
 fig_donut_current.update_layout(title_text="Current Year", height=350, width=350)
 
 # Forecasted Year Donut
-forecasted_percentage = forecasted_data
-forecasted_remaining = max(0, GOAL - forecasted_data)
-fig_donut_forecasted = go.Figure(data=[go.Pie(values=[forecasted_percentage, forecasted_remaining], labels=['What I own', 'Remaining'], hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=90, direction='clockwise')])
+forecasted_values = [forecasted_data, max(0, GOAL - forecasted_data)]
+forecasted_labels = ['What I own', 'Remaining']
+fig_donut_forecasted = go.Figure(data=[go.Pie(values=forecasted_values, labels=forecasted_labels, hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=0, direction='clockwise')])
 fig_donut_forecasted.update_layout(title_text="Forecasted Year", height=350, width=350)
+
 
 # Display donuts side by side
 col1, col2 = st.columns(2)

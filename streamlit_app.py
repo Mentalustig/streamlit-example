@@ -80,6 +80,9 @@ for i in range(years_forecast):
     forecasted_data['House Dellach'] = forecasted_data['House Dellach'] * (1 + house_dellach_interest_rate / 100)
     forecasted_data['Savings Account'] = forecasted_data['Savings Account'] * (1 + savings_account_interest_rate / 100)
     forecasted_data['Week'] += pd.DateOffset(years=1)
+    forecasted_data['Bank Account'] = forecasted_data['Bank Account']
+    forecasted_data['Others'] = forecasted_data['Others']
+    forecasted_data['Inheritance'] = forecasted_data['Inheritance']
     df = df.append(forecasted_data, ignore_index=True)
 
 

@@ -83,7 +83,9 @@ for i in range(years_forecast):
     forecasted_data['Bank Account'] = forecasted_data['Bank Account']
     forecasted_data['Others'] = forecasted_data['Others']
     forecasted_data['Inheritance'] = forecasted_data['Inheritance']
-    df = df.append(forecasted_data, ignore_index=True)
+    # Wrap forecasted_data in a list before appending
+    df = df.append([forecasted_data], ignore_index=True)
+
 
 
 # Stacked Area Chart

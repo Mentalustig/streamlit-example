@@ -4,7 +4,7 @@ import plotly.express as px
 from datetime import datetime
 
 # Read in data from the Google Sheet.
-@st.cache(ttl=600)
+@st.cache_data(ttl=600)
 def load_data(sheets_url):
     csv_url = sheets_url.replace("/edit#gid=", "/export?format=csv&gid=")
     df = pd.read_csv(csv_url)
@@ -13,7 +13,6 @@ def load_data(sheets_url):
 
 # Constants
 GOAL = 800000
-years_forecast = 10
 
 # Load data
 df = load_data(st.secrets["public_gsheets_url"])
@@ -21,6 +20,13 @@ df = load_data(st.secrets["public_gsheets_url"])
 # Dashboard Title
 st.title("Mamis Finance Dashboard")
 st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI0FjOSYc3SEh3ZTAcjPtipjNU_AAdtqUWzdBsU/edit#gid=0)")
+
+# Inputs (at the beginning)
+years_forecast = st.slider("Number of Years for Forecast", 1, 30, 10)
+monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 2000)
+investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
+house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
+savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
 
 # Calculate current and last period's sum for each category
 current_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sort_values()
@@ -67,13 +73,6 @@ fig2.update_traces(textinfo='percent+label', marker=dict(colors=['#1f77b4', '#ff
 
 st.plotly_chart(fig1)
 st.plotly_chart(fig2)
-
-# Inputs (at the end)
-years_forecast = st.slider("Number of Years for Forecast", 1, 30, 10)
-monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 2000)
-investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
-house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
-savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
 
 # Print data as a table (at the bottom)
 st.write(df)

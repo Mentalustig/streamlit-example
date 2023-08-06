@@ -1,6 +1,5 @@
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
 from datetime import datetime
 
 # Read in data from the Google Sheet.
@@ -24,14 +23,32 @@ st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI
 # Print data as a table
 st.write(df)
 
-# Calculate current and last period's sum
-current_sum = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
-last_period_sum = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum() if len(df) > 1 else 0
+# Calculate current and last period's sum for each category
+current_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']]
+last_period_data = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']] if len(df) > 1 else [0] * 6
+
+# Stacked Bar chart for current vs last period
+stacked_bar_chart_data = pd.DataFrame({
+    'Category': ['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others'],
+    'Last Period': last_period_data,
+    'Current Period': current_data
+})
+st.bar_chart(stacked_bar_chart_data.set_index('Category'))
+
+# Display the difference
+difference = current_sum - last_period_sum
+st.write(f"The difference between the current period and the last period is {difference:.2f}")
 
 # Success message and balloons
-if current_sum - last_period_sum >= 2000:
+if difference >= 2000:
     st.success("Congratulations! This month's money is at least 2000 more than last month's sum.")
     st.balloons()
+
+# Stacked Area Chart
+df['Total'] = df[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum(axis=1)
+df['Forecast'] = df['Total']
+df['Goal'] = GOAL
+st.area_chart(df.set_index('Week')[['Total', 'Forecast', 'Goal']])
 
 # Inputs
 years_forecast = st.slider("Number of Years for Forecast", 1, 30, 5)
@@ -40,14 +57,8 @@ investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
 house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
 savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
 
-# Calculate current and forecasted sum
-current_sum = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
+# Calculate forecasted sum
 forecasted_sum = current_sum
-
-# Stacked Area Chart
-df['Total'] = df[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum(axis=1)
-df['Forecast'] = df['Total']
-
 for i in range(12 * years_forecast): # Forecast for the number of years
     forecasted_sum += monthly_investment_forecast
     forecasted_sum *= (1 + (investment_interest_rate + house_dellach_interest_rate + savings_account_interest_rate) / 100 / 12)
@@ -57,34 +68,8 @@ for i in range(12 * years_forecast): # Forecast for the number of years
     new_row_df = new_row_df.reindex(columns=df.columns)  # Align with the existing DataFrame columns
     df = pd.concat([df, new_row_df], ignore_index=True)
 
-df['Goal'] = GOAL
-
-plt.figure(figsize=(10, 6))
-plt.fill_between(df['Week'], df['Total'], label='Total', alpha=0.5)
-plt.fill_between(df['Week'], df['Forecast'], label='Forecast', alpha=0.5)
-plt.plot(df['Week'], df['Goal'], label='Goal', linestyle='--')
-plt.xlabel('Date')
-plt.ylabel('Amount')
-plt.legend()
-plt.title('Financial Progress and Forecast')
-st.pyplot()
-
 # Donut chart for current goal progress
-fig1, ax1 = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
-data1 = [current_sum, GOAL - current_sum]
-labels1 = [f'Current {current_sum / GOAL * 100:.1f}%', 'Remaining']
-wedges1, texts1, autotexts1 = ax1.pie(data1, autopct='%1.1f%%', textprops=dict(color="w"), startangle=90, wedgeprops=dict(width=0.3))
-ax1.legend(wedges1, labels1, title="Current Goal Progress", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-plt.setp(autotexts1, size=10, weight="bold")
-st.pyplot(fig1)
+st.pie_chart([current_sum, GOAL - current_sum], labels=[f'Current {current_sum / GOAL * 100:.1f}%', 'Remaining'])
 
 # Donut chart for forecasted goal progress
-fig2, ax2 = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
-data2 = [forecasted_sum, GOAL - forecasted_sum]
-labels2 = [f'Forecasted {forecasted_sum / GOAL * 100:.1f}%', 'Remaining']
-wedges2, texts2, autotexts2 = ax2.pie(data2, autopct='%1.1f%%', textprops=dict(color="w"), startangle=90, wedgeprops=dict(width=0.3))
-ax2.legend(wedges2, labels2, title="Forecasted Goal Progress", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-plt.setp(autotexts2, size=10, weight="bold")
-st.pyplot(fig2)
-
-
+st.pie_chart([forecasted_sum, GOAL - forecasted_sum], labels=[f'Forecasted {forecasted_sum / GOAL * 100:.1f}%', 'Remaining'])

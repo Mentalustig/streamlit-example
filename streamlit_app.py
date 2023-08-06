@@ -1,6 +1,5 @@
 import pandas as pd
 import streamlit as st
-import plotly.express as px  # Add this import statement
 import plotly.graph_objects as go
 from datetime import datetime
 
@@ -22,23 +21,27 @@ df = load_data(st.secrets["public_gsheets_url"])
 st.title("Mamis Finance Dashboard")
 st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI0FjOSYc3SEh3ZTAcjPtipjNU_AAdtqUWzdBsU/edit#gid=0)")
 
-# Find current period (last row with data) and previous period
-current_period = df.iloc[-1]
-previous_period = df.iloc[-2] if len(df) > 1 else pd.Series([0] * 7, index=df.columns)
+# Find current and last period data
+current_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']]
+last_period_data = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']] if len(df) > 1 else [0] * 6
 
-# Create DataFrame for the stacked bar chart
-stacked_bar_chart_data = pd.DataFrame({
-    'Category': current_period.index[1:],  # Exclude the 'Week' column from the categories
-    'Last Period': previous_period.values[1:],  # Exclude the 'Week' value from the previous period
-    'Current Period': current_period.values[1:],  # Exclude the 'Week' value from the current period
+# Combine current and last period data for the grouped bar chart
+bar_chart_data = pd.DataFrame({
+    'Category': current_data.index,
+    'This Period': current_data.values,
+    'Last Period': last_period_data.values
 })
 
-# Plot the stacked bar chart
-fig = px.bar(stacked_bar_chart_data, x='Category', y=['Last Period', 'Current Period'], barmode='stack')
+# Plot the grouped bar chart
+fig = go.Figure(data=[
+    go.Bar(name='This Period', x=bar_chart_data['Category'], y=bar_chart_data['This Period']),
+    go.Bar(name='Last Period', x=bar_chart_data['Category'], y=bar_chart_data['Last Period'])
+])
+fig.update_layout(barmode='group')
 st.plotly_chart(fig)
 
 # Success message and balloons
-total_difference = current_period.values[1:].sum() - previous_period.values[1:].sum()
+total_difference = current_data.sum() - last_period_data.sum()
 if total_difference >= 2000:
     st.success(f"Congratulations! This month's money is {total_difference} more than last month's sum.")
     st.balloons()
@@ -51,41 +54,38 @@ house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10
 savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
 
 # Forecasted data
-forecasted_data = pd.DataFrame(columns=df.columns)
-current_row = df.iloc[-1]
-
+forecasted_data = df.iloc[-1].copy()
 for year in range(1, years_forecast + 1):
-    forecasted_row = current_row.copy()
-    forecasted_row['Week'] = forecasted_row['Week'] + pd.DateOffset(years=year)
-    future_investment = monthly_investment_forecast * 12 * ((1 + (investment_interest_rate / 100 / 12)) ** (12 * year) - 1) / (investment_interest_rate / 100 / 12)
-    forecasted_row['Investment Account'] = (forecasted_row['Investment Account'] + future_investment) * (1 + investment_interest_rate / 100) ** year
-    forecasted_row['House Dellach'] *= (1 + house_dellach_interest_rate / 100) ** year
-    forecasted_row['Savings Account'] *= (1 + savings_account_interest_rate / 100) ** year
-    forecasted_data = forecasted_data.append(forecasted_row, ignore_index=True)
+    forecasted_data['Investment Account'] *= (1 + investment_interest_rate / 100)
+    forecasted_data['House Dellach'] *= (1 + house_dellach_interest_rate / 100)
+    forecasted_data['Savings Account'] *= (1 + savings_account_interest_rate / 100)
+    forecasted_data['Investment Account'] += monthly_investment_forecast * 12 * ((1 + (investment_interest_rate / 100 / 12)) ** (12 * year) - 1)
+    forecasted_row = df.iloc[-1].copy()
+    forecasted_row['Week'] += pd.DateOffset(years=year)
+    forecasted_row[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']] = forecasted_data[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']]
+    df = pd.concat([df, forecasted_row], ignore_index=True)
 
-# Concatenate historic and forecasted data
-df_forecasted = pd.concat([df, forecasted_data], ignore_index=True)
+# Define the order of categories for the stacked area chart
+order_of_categories = ['Inheritance', 'Bank Account', 'Others', 'Savings Account', 'House Dellach', 'Investment Account']
 
 # Plot the stacked area chart with the specified order
-st.area_chart(df_forecasted.set_index('Week')[order_of_categories])
+st.area_chart(df.set_index('Week')[order_of_categories])
 
 # Current Year Donut
-current_remaining = GOAL - current_data.sum()
-fig1 = go.Figure(data=[go.Pie(values=[current_data.sum(), current_remaining], labels=['Current', 'Remaining'], hole=.3)])
-fig1.update_layout(title_text="Current Year")
+current_year_donut = go.Figure(data=[go.Pie(values=[current_data.sum(), GOAL - current_data.sum()], labels=['Current', 'Remaining'], hole=.3)])
+current_year_donut.update_layout(title_text="Current Year")
 
 # Forecasted Year Donut
-forecasted_remaining = GOAL - forecasted_data.sum()
-fig2 = go.Figure(data=[go.Pie(values=[forecasted_data.sum(), forecasted_remaining], labels=['Forecasted', 'Remaining'], hole=.3)])
-fig2.update_layout(title_text="Forecasted Year")
+forecasted_year_donut = go.Figure(data=[go.Pie(values=[forecasted_data['Total'].sum(), GOAL - forecasted_data['Total'].sum()], labels=['Forecasted', 'Remaining'], hole=.3)])
+forecasted_year_donut.update_layout(title_text="Forecasted Year")
 
 # Display donuts side by side
 col1, col2 = st.columns(2)
-col1.plotly_chart(fig1)
-col2.plotly_chart(fig2)
+col1.plotly_chart(current_year_donut)
+col2.plotly_chart(forecasted_year_donut)
 
 # Print data as a table (at the bottom)
-st.write(df_forecasted)
+st.write(df)
 
 # Footnote with assumptions and current goal
 st.markdown("---")

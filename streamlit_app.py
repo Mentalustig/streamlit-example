@@ -50,13 +50,14 @@ savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0
 
 # Forecasted data
 forecasted_data = current_data.copy()
-forecasted_data['Investment Account'] *= (1 + investment_interest_rate / 100) ** years_forecast
+future_investment = monthly_investment_forecast * 12 * ((1 + (investment_interest_rate / 100 / 12)) ** (12 * years_forecast) - 1) / (investment_interest_rate / 100 / 12)
+forecasted_data['Investment Account'] = (forecasted_data['Investment Account'] + future_investment) * (1 + investment_interest_rate / 100) ** years_forecast
 forecasted_data['House Dellach'] *= (1 + house_dellach_interest_rate / 100) ** years_forecast
 forecasted_data['Savings Account'] *= (1 + savings_account_interest_rate / 100) ** years_forecast
-forecasted_data['Investment Account'] += monthly_investment_forecast * 12 * ((1 + (investment_interest_rate / 100 / 12)) ** (12 * years_forecast) - 1)
 
-# Define the order of categories
-order_of_categories = ['Inheritance', 'Bank Account', 'Others', 'Savings Account', 'House Dellach', 'Investment Account']
+# Sort categories by the change in forecasted values
+forecasted_change = (forecasted_data - current_data).sort_values()
+order_of_categories = forecasted_change.index.tolist()
 
 # Plot the stacked area chart with the specified order
 st.area_chart(df.set_index('Week')[order_of_categories])
@@ -80,4 +81,4 @@ st.write(df)
 # Footnote with assumptions and current goal
 st.markdown("---")
 st.markdown("**Assumptions and Current Goal:**")
-st.markdown("The current goal is set at $800,000. This amount is based on the estimated monthly living expenses of $3,500 to $4,500. The forecast and visualizations above are built on the assumptions provided through the sliders, reflecting potential investment returns, interest rates, and other financial factors.")
+st.markdown("The current goal is set at $800,000. This amount is based on the estimated monthly living expenses of $3,500 to $")

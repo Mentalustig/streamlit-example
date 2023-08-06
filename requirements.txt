@@ -4,5 +4,4 @@ streamlit
 numpy
 math
 datetime
-gsheetsdb
 google-auth-oauthlib

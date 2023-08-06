@@ -42,7 +42,7 @@ for col in stacked_bar_chart_data.columns:
     fig.add_annotation(go.layout.Annotation(x=col, y=total + 500, text=f"Total: {total}", showarrow=False))
     fig.add_annotation(go.layout.Annotation(x=col, y=total + 1000, text=f"Difference: {difference}", showarrow=False))
 
-fig.update_layout(barmode='stack', title_text="Current vs Last Period", xaxis_title="Period", yaxis_title="Amount")
+fig.update_layout(barmode='stack', title_text="Current vs Last Period", xaxis_title="Category", yaxis_title="Amount")
 st.plotly_chart(fig)
 
 # Success message and balloons

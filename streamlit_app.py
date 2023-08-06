@@ -1,12 +1,16 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 import matplotlib.pyplot as plt
 
 # Read in data from the Google Sheet.
-@st.cache(ttl=600)
+@st.cache_data(ttl=600)
 def load_data(sheets_url):
     csv_url = sheets_url.replace("/edit#gid=", "/export?format=csv&gid=")
-    return pd.read_csv(csv_url)
+    df = pd.read_csv(csv_url)
+    # Convert relevant columns to numeric
+    for col in ['Investment Account', 'House Dellach', 'Bank Account']:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    return df
 
 # Constants
 GOAL = 800000
@@ -17,21 +21,21 @@ df = load_data(st.secrets["public_gsheets_url"])
 # Current amounts
 investment_amount = float(df.iloc[-1]['Investment Account'])
 house_dellach = float(df.iloc[-1]['House Dellach'])
-savings_account = float(df.iloc[-1]['Bank Account'])
-
-# Inputs
-monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 10000, 1000)
-investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
-house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
-savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
-
-# Calculate current and forecasted sum
-current_sum = investment_amount + house_dellach + savings_account
-forecasted_sum = current_sum
+savings_account = float(df.iloc[-1]['Savings Account'])
 
 # Dashboard Title
 st.title("Mamis Finance Dashboard")
 st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI0FjOSYc3SEh3ZTAcjPtipjNU_AAdtqUWzdBsU/edit#gid=0)")
+
+# Inputs
+monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 1000)
+investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
+house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
+savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 2)
+
+# Calculate current and forecasted sum
+current_sum = investment_amount + house_dellach + savings_account
+forecasted_sum = current_sum
 
 # Stacked Area Chart
 df['Total'] = df['Investment Account'] + df['House Dellach'] + df['Bank Account']

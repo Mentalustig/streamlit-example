@@ -4,3 +4,4 @@ streamlit
 numpy
 datetime
 google-auth-oauthlib
+matplotlib

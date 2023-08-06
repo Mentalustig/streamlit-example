@@ -53,21 +53,20 @@ house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10
 savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
 
 # Forecasted data
-forecasted_data = current_data.copy()
-future_investment = monthly_investment_forecast * 12 * ((1 + (investment_interest_rate / 100 / 12)) ** (12 * years_forecast) - 1) / (investment_interest_rate / 100 / 12)
-forecasted_data['Investment Account'] = (forecasted_data['Investment Account'] + future_investment) * (1 + investment_interest_rate / 100) ** years_forecast
-forecasted_data['House Dellach'] *= (1 + house_dellach_interest_rate / 100) ** years_forecast
-forecasted_data['Savings Account'] *= (1 + savings_account_interest_rate / 100) ** years_forecast
+forecasted_data = pd.DataFrame(columns=df.columns)
+current_row = df.iloc[-1]
 
-# Sort categories by the change in forecasted values
-forecasted_change = (forecasted_data - current_data).sort_values()
-order_of_categories = forecasted_change.index.tolist()
+for year in range(1, years_forecast + 1):
+    forecasted_row = current_row.copy()
+    forecasted_row['Week'] = forecasted_row['Week'] + pd.DateOffset(years=year)
+    future_investment = monthly_investment_forecast * 12 * ((1 + (investment_interest_rate / 100 / 12)) ** (12 * year) - 1) / (investment_interest_rate / 100 / 12)
+    forecasted_row['Investment Account'] = (forecasted_row['Investment Account'] + future_investment) * (1 + investment_interest_rate / 100) ** year
+    forecasted_row['House Dellach'] *= (1 + house_dellach_interest_rate / 100) ** year
+    forecasted_row['Savings Account'] *= (1 + savings_account_interest_rate / 100) ** year
+    forecasted_data = forecasted_data.append(forecasted_row, ignore_index=True)
 
-# Combine historic and forecasted data
-forecasted_row = df.iloc[-1].copy()
-forecasted_row['Week'] += pd.DateOffset(years=years_forecast)
-forecasted_row[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']] = forecasted_data[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']]
-df_forecasted = pd.concat([df, forecasted_row], ignore_index=True)
+# Concatenate historic and forecasted data
+df_forecasted = pd.concat([df, forecasted_data], ignore_index=True)
 
 # Plot the stacked area chart with the specified order
 st.area_chart(df_forecasted.set_index('Week')[order_of_categories])

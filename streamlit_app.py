@@ -66,12 +66,16 @@ forecasted_data['Investment Account'] *= (1 + investment_interest_rate / 100) **
 forecasted_data['Investment Account'] += monthly_investment_forecast * 12 * (1 + investment_interest_rate / 100) ** years_forecast
 forecasted_data['Savings Account'] *= (1 + savings_account_interest_rate / 100) ** years_forecast
 
-# Append forecasted data to the DataFrame
-forecasted_row = forecasted_data.append(pd.Series({'Week': df.iloc[-1]['Week'] + pd.DateOffset(years=years_forecast)}))
-df = df.append(forecasted_row, ignore_index=True)
+# Create a new DataFrame row with forecasted data
+forecasted_row = forecasted_data.to_frame().T
+forecasted_row['Week'] = df.iloc[-1]['Week'] + pd.DateOffset(years=years_forecast)
+
+# Append forecasted row to the DataFrame
+df = pd.concat([df, forecasted_row], ignore_index=True)
 
 # Stacked Area Chart
 st.area_chart(df.set_index('Week')[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']])
+
 
 # ... (other code remains the same)
 # Donut charts for current and forecasted goal progress

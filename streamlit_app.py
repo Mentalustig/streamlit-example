@@ -55,21 +55,24 @@ forecasted_data['House Dellach'] *= (1 + house_dellach_interest_rate / 100) ** y
 forecasted_data['Savings Account'] *= (1 + savings_account_interest_rate / 100) ** years_forecast
 forecasted_data['Investment Account'] += monthly_investment_forecast * 12 * ((1 + (investment_interest_rate / 100 / 12)) ** (12 * years_forecast) - 1)
 
-# Stacked Area Chart
-df['Total'] = df[['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum(axis=1)
-forecasted_row = df.iloc[-1].copy()
-forecasted_row['Week'] += pd.DateOffset(years=years_forecast)
-forecasted_row[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']] = forecasted_data[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']]
-forecasted_df = pd.DataFrame([forecasted_row])  # Create a DataFrame with the new row
-df = pd.concat([df, forecasted_df], ignore_index=True)  # Concatenate the existing DataFrame with the new row
-st.area_chart(df.set_index('Week')[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account', 'Inheritance', 'Others']])
+# Define the order of categories
+order_of_categories = ['Inheritance', 'Bank Account', 'Others', 'Savings Account', 'House Dellach', 'Investment Account']
 
-# Donut charts
-fig = go.Figure()
-fig.add_trace(go.Pie(values=[current_data.sum(), GOAL - current_data.sum()], labels=['Current', 'Remaining'], hole=.3, name='Current Year'))
-fig.add_trace(go.Pie(values=[forecasted_data.sum(), GOAL - forecasted_data.sum()], labels=['Forecasted', 'Remaining'], hole=.3, name='Forecasted Year'))
-fig.update_layout(title_text="Current vs Forecasted Goal Progress", showlegend=False)
-st.plotly_chart(fig)
+# Plot the stacked area chart with the specified order
+st.area_chart(df.set_index('Week')[order_of_categories])
+
+# Current Year Donut
+fig1 = go.Figure(data=[go.Pie(values=[current_data.sum(), GOAL - current_data.sum()], labels=['Current', 'Remaining'], hole=.3)])
+fig1.update_layout(title_text="Current Year")
+
+# Forecasted Year Donut
+fig2 = go.Figure(data=[go.Pie(values=[forecasted_data.sum(), GOAL - forecasted_data.sum()], labels=['Forecasted', 'Remaining'], hole=.3)])
+fig2.update_layout(title_text="Forecasted Year")
+
+# Display donuts side by side
+col1, col2 = st.columns(2)
+col1.plotly_chart(fig1)
+col2.plotly_chart(fig2)
 
 # Print data as a table (at the bottom)
 st.write(df)

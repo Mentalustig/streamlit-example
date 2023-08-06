@@ -2,6 +2,5 @@ altair
 pandas
 streamlit
 numpy
-math
 datetime
 google-auth-oauthlib

@@ -26,14 +26,15 @@ st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI
 current_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sort_values()
 last_period_data = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sort_values() if len(df) > 1 else [0] * 6
 
-# Stacked Bar chart for current vs last period
+# Transpose the data to have periods as columns and categories as rows
 stacked_bar_chart_data = pd.DataFrame({
     'Category': current_data.index,
     'Last Period': last_period_data.values,
     'Current Period': current_data.values
-})
-st.bar_chart(stacked_bar_chart_data.set_index('Category'))
+}).set_index('Category').T
 
+# Plot the stacked bar chart
+st.bar_chart(stacked_bar_chart_data)
 # Success message and balloons
 total_difference = current_data.sum() - last_period_data.sum()
 if total_difference >= 2000:

@@ -84,8 +84,12 @@ for i in range(years_forecast):
     forecasted_data['Bank Account'] = forecasted_data['Bank Account']
     forecasted_data['Others'] = forecasted_data['Others']
     forecasted_data['Inheritance'] = forecasted_data['Inheritance']
-    # Create a new DataFrame from forecasted_data and concatenate it with df
-    df = pd.concat([df, pd.DataFrame([forecasted_data])], ignore_index=True)
+
+    # Convert the forecasted data to DataFrame and append it
+    forecasted_row = pd.DataFrame([forecasted_data])
+
+    # Append the row to the DataFrame
+    df = df.append(forecasted_row, ignore_index=True)
 
 
 # Stacked Area Chart

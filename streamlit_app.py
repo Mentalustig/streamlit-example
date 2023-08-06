@@ -95,9 +95,8 @@ for col in df.columns[1:]:
 fig_area_chart = px.area(df, x='Week', y=df.columns[1:], title='Stacked Area Chart')
 st.plotly_chart(fig_area_chart)
 
-# Get current data and forecasted data
-current_data = df.iloc[-1, 1:].sum()
-forecasted_data = df.iloc[-years_forecast-1, 1:].sum() # Assuming `years_forecast` is the number of forecasted years
+# Get forecasted data
+forecasted_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
 
 # Current Year Donut
 current_remaining = GOAL - current_data
@@ -108,6 +107,9 @@ fig_donut_current.update_layout(title_text="Current Year")
 forecasted_remaining = GOAL - forecasted_data
 fig_donut_forecasted = go.Figure(data=[go.Pie(values=[forecasted_data, forecasted_remaining], labels=['Forecasted', 'Remaining'], hole=.3)])
 fig_donut_forecasted.update_layout(title_text="Forecasted Year")
+
+fig_donut_current.update_layout(height=350, width=350)
+fig_donut_forecasted.update_layout(height=350, width=350)
 
 # Display donuts side by side
 col1, col2 = st.columns(2)

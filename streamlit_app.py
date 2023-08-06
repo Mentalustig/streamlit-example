@@ -128,12 +128,12 @@ light_blue = 'rgb(153, 204, 255)'
 
 # Current Year Donut
 current_remaining = GOAL - current_data
-fig_donut_current = go.Figure(data=[go.Pie(values=[current_data, current_remaining], labels=['Current', 'Remaining'], hole=.3, marker=dict(colors=[dark_blue, light_blue]))])
+fig_donut_current = go.Figure(data=[go.Pie(values=[current_data, current_remaining], labels=['What I own', 'Remaining'], hole=.3, marker=dict(colors=[dark_blue, light_blue]))])
 fig_donut_current.update_layout(title_text="Current Year", height=350, width=350)
 
 # Forecasted Year Donut
 forecasted_remaining = GOAL - forecasted_data
-fig_donut_forecasted = go.Figure(data=[go.Pie(values=[forecasted_data, forecasted_remaining], labels=['Forecasted', 'Remaining'], hole=.3, marker=dict(colors=[dark_blue, light_blue]))])
+fig_donut_forecasted = go.Figure(data=[go.Pie(values=[forecasted_data, forecasted_remaining], labels=['What I own', 'Remaining'], hole=.3, marker=dict(colors=[dark_blue, light_blue]))])
 fig_donut_forecasted.update_layout(title_text="Forecasted Year", height=350, width=350)
 
 # Display donuts side by side

@@ -3,9 +3,10 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 # Read in data from the Google Sheet.
-@st.cache(ttl=600)
+@st.cache_data(ttl=600)
 def load_data(sheets_url):
     csv_url = sheets_url.replace("/edit#gid=", "/export?format=csv&gid=")
     df = pd.read_csv(csv_url)
@@ -14,70 +15,152 @@ def load_data(sheets_url):
 
 # Constants
 GOAL = 800000
-COLOR_TURQUOISE = 'rgb(64, 224, 208)'
-COLOR_LIGHT_TURQUOISE = 'rgb(224, 255, 255)'
 
 # Load data
 df = load_data(st.secrets["public_gsheets_url"])
+original_length = len(df)
+
+# Calculate current and last period's sum for each category
+current_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
+last_period_data = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
 
 # Dashboard Title
 st.title("Mamis Finance Dashboard")
 st.markdown("[Go to Google Sheet](https://docs.google.com/spreadsheets/d/1MGyZNI0FjOSYc3SEh3ZTAcjPtipjNU_AAdtqUWzdBsU/edit#gid=0)")
 
-# Summary Section
-st.header("Summary")
-st.markdown("Welcome to your personal finance dashboard! Here you can see how well you're progressing toward your financial goals. The charts and numbers below show the current status and how things have changed since the last update. You can also explore forecasts for the future.")
+# Extract the actual dates from the last two periods
+last_period_date = df.iloc[-2]['Week'].strftime('%Y-%m-%d')
+current_period_date = df.iloc[-1]['Week'].strftime('%Y-%m-%d')
 
-# Guide Section
-st.header("Guide")
-st.markdown("This guide will help you understand the data and charts.")
-with st.expander("How to Interpret the Data", expanded=False):
-    st.markdown("""
-    - **Bar Chart**: Compares total money for the current and last period.
-    - **Stacked Bar Chart**: Breaks down the total money into different categories.
-    - **Forecasted Year Donut**: Shows what you will own and what's remaining to reach your goal after a forecasted period.
-    - **Current Year Donut**: Similar to Forecasted, but for the current year.
-    - **Stacked Area Chart**: Represents how each category has evolved over time.
-    """)
+# Bar chart for current vs last period
+bar_chart_data = pd.DataFrame({
+    'Period': [last_period_date, current_period_date],
+    'Total Money': [last_period_data, current_data]
+})
 
-# Bar Chart Section
-st.header("Bar Chart: Current vs Last Period")
-current_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
-last_period_data = df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
-fig = go.Figure()
-fig.add_trace(go.Bar(x=['Current'], y=[current_data], name='Current'))
-fig.add_trace(go.Bar(x=['Last Period'], y=[last_period_data], name='Last Period'))
-fig.update_layout(height=300, showlegend=False, plot_bgcolor=COLOR_LIGHT_TURQUOISE)
+fig = px.bar(bar_chart_data, x='Period', y='Total Money', labels={'Total Money': 'Total Money (Sum of all Categories)'}, barmode='group')
+
+# Function to round the number to the nearest 100
+def round_to_100(n):
+    return round(n / 100) * 100
+
+# Bar chart annotations
+for i, value in enumerate(bar_chart_data['Total Money']):
+    value_rounded = round_to_100(value)
+    fig.add_annotation(x=bar_chart_data['Period'].iloc[i], y=value_rounded / 2, # Adjust the y position to inside the bar
+                       text=f"{value_rounded:,.0f}", showarrow=False, 
+                       font=dict(size=24, color='white')) # Set the text color to white
+
+fig.update_layout(height=300)
 st.plotly_chart(fig)
 
-# Stacked Bar Chart
-st.header("Stacked Bar Chart: Breakdown by Category")
-categories = ['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']
-fig_stacked_bar = px.bar(df, x='Week', y=categories, height=300, title='Stacked Bar Chart of Financial Categories')
-fig_stacked_bar.update_layout(plot_bgcolor=COLOR_LIGHT_TURQUOISE)
+# Success message and balloons
+total_difference = current_data - last_period_data
+if total_difference >= 2000:
+    st.success(f"Congratulations! This month's money is {total_difference} more than last month's sum.")
+    st.balloons()
+
+stacked_bar_data = pd.DataFrame({
+    'Period': ['Last Period', 'Current Period'],
+    'Bank Account': [df.iloc[-2]['Bank Account'], df.iloc[-1]['Bank Account']],
+    'Investment Account': [df.iloc[-2]['Investment Account'], df.iloc[-1]['Investment Account']],
+    'Inheritance': [df.iloc[-2]['Inheritance'], df.iloc[-1]['Inheritance']],
+    'House Dellach': [df.iloc[-2]['House Dellach'], df.iloc[-1]['House Dellach']],
+    'Savings Account': [df.iloc[-2]['Savings Account'], df.iloc[-1]['Savings Account']],
+    'Others': [df.iloc[-2]['Others'], df.iloc[-1]['Others']]
+})
+
+fig_stacked_bar = go.Figure(data=[
+    go.Bar(name='Bank Account', x=stacked_bar_data['Period'], y=stacked_bar_data['Bank Account']),
+    go.Bar(name='Investment Account', x=stacked_bar_data['Period'], y=stacked_bar_data['Investment Account']),
+    go.Bar(name='Inheritance', x=stacked_bar_data['Period'], y=stacked_bar_data['Inheritance']),
+    go.Bar(name='House Dellach', x=stacked_bar_data['Period'], y=stacked_bar_data['House Dellach']),
+    go.Bar(name='Savings Account', x=stacked_bar_data['Period'], y=stacked_bar_data['Savings Account']),
+    go.Bar(name='Others', x=stacked_bar_data['Period'], y=stacked_bar_data['Others']),
+])
+
+
+# Change the bar mode
+fig_stacked_bar.update_layout(barmode='stack')
+fig_stacked_bar.update_layout(height=400)
 st.plotly_chart(fig_stacked_bar)
 
-# Donuts Section
-st.header("Progress Towards Goal")
-current_sum = df.iloc[-1][categories].sum()
-forecasted_sum = current_sum * 1.05 # Assuming a 5% growth
+# Inputs (at the end)
+years_forecast = st.slider("Number of Years for Forecast", 1, 30, 10)
+monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 2000)
+investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
+house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
+savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4)
 
-fig_donut_current = go.Figure(data=[go.Pie(labels=['Owned', 'Remaining'], values=[current_sum, GOAL - current_sum], hole=.3)])
-fig_donut_forecasted = go.Figure(data=[go.Pie(labels=['Forecasted', 'Remaining'], values=[forecasted_sum, GOAL - forecasted_sum], hole=.3)])
 
+# Forecasted data for each year
+forecasted_data = df.iloc[-1].copy()
+for i in range(years_forecast):
+    forecasted_data['Investment Account'] = forecasted_data['Investment Account'] * (1 + investment_interest_rate / 100) + monthly_investment_forecast * 12
+    forecasted_data['House Dellach'] = forecasted_data['House Dellach'] * (1 + house_dellach_interest_rate / 100)
+    forecasted_data['Savings Account'] = forecasted_data['Savings Account'] * (1 + savings_account_interest_rate / 100)
+    forecasted_data['Week'] += pd.DateOffset(years=1)
+    forecasted_data['Bank Account'] = forecasted_data['Bank Account']
+    forecasted_data['Others'] = forecasted_data['Others']
+    forecasted_data['Inheritance'] = forecasted_data['Inheritance']
+
+    # Converting the forecasted_data Series to a DataFrame and concatenating it with the existing df
+    forecasted_row_series = pd.Series(forecasted_data)
+    df = pd.concat([df, forecasted_row_series.to_frame().T], ignore_index=True)
+
+# Convert columns to numerical data
+for col in df.columns[1:]:
+    df[col] = df[col].replace(',', '', regex=True).astype(float)
+
+# Create a stacked area chart
+fig_area_chart = px.area(df, x='Week', y=df.columns[1:], title='Stacked Area Chart')
+
+# Extracting every second year from the DataFrame
+df['Year'] = pd.to_datetime(df['Week']).dt.year
+every_second_year = df[df['Year'] % 2 == 0]
+
+# Stacked area chart annotations for every second year
+for index, row in every_second_year.iterrows():
+    # Calculate the total sum for the current row
+    total_sum = round_to_100(row[1:].sum())
+    # Add an annotation at the corresponding X value with the total sum
+    fig_area_chart.add_annotation(x=row['Week'], y=total_sum, text=f"{total_sum:,.0f}", showarrow=False, font=dict(size=14))
+
+# Get the last historical date using the original_length
+last_historical_date = df.iloc[original_length - 1]['Week']
+
+# Add vertical line to separate historical and forecasted data
+fig_area_chart.add_vline(x=last_historical_date, line_dash="dash", line_color="red", annotation_text="Forecast Starts", annotation_position="top left")
+st.plotly_chart(fig_area_chart)
+
+# Get forecasted data
+forecasted_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
+
+# Define the colors
+dark_blue = 'rgb(0, 51, 204)'
+light_blue = 'rgb(153, 204, 255)'
+
+# Current Year Donut
+current_values = [current_data, max(0, GOAL - current_data)]
+current_labels = ['What I own', 'Remaining']
+fig_donut_current = go.Figure(data=[go.Pie(values=current_values, labels=current_labels, hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=0, direction='clockwise')])
+fig_donut_current.update_layout(title_text="Current Year", height=350, width=350)
+
+# Forecasted Year Donut
+forecasted_values = [forecasted_data, max(0, GOAL - forecasted_data)]
+forecasted_labels = ['What I own', 'Remaining']
+fig_donut_forecasted = go.Figure(data=[go.Pie(values=forecasted_values, labels=forecasted_labels, hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=0, direction='counterclockwise')])
+fig_donut_forecasted.update_layout(title_text="Forecasted Year", height=350, width=350)
+
+# Display donuts side by side
 col1, col2 = st.columns(2)
 col1.plotly_chart(fig_donut_current)
 col2.plotly_chart(fig_donut_forecasted)
 
-# Stacked Area Chart
-st.header("Stacked Area Chart: Category Evolution")
-fig_area = px.area(df, x='Week', y=categories, title='Evolution of Categories Over Time')
-fig_area.update_layout(plot_bgcolor=COLOR_LIGHT_TURQUOISE)
-st.plotly_chart(fig_area)
+# Print data as a table (at the bottom)
+st.write(df)
 
-# Table of Latest Data
-st.header("Latest Data")
-st.write(df.tail())
-
-# Footer Note
-st.markdown("*Data is updated weekly. For any questions or concerns, please contact [support@email.com](mailto:support@email.com)*")
+# Footnote with assumptions and current goal
+st.markdown("---")
+st.markdown("**Assumptions and Current Goal:**")
+st.markdown("The current goal is set at $800,000. This amount is based on the estimated monthly living expenses of $3,500 to $4,500. The forecast and visualizations above are built on the assumptions provided through the sliders, reflecting potential investment returns, interest rates, and other financial factors.")

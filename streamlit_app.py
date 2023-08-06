@@ -1,6 +1,5 @@
 import pandas as pd
 import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 
@@ -35,13 +34,8 @@ stacked_bar_chart_data = pd.DataFrame({
 
 # Plot the stacked bar chart with the total and difference
 fig = go.Figure()
-for col in stacked_bar_chart_data.columns:
-    fig.add_trace(go.Bar(x=[col], y=[stacked_bar_chart_data[col].values[0]], name=col))
-    total = stacked_bar_chart_data[col].sum()
-    difference = current_data[col] - last_period_data[col]
-    fig.add_annotation(go.layout.Annotation(x=col, y=total + 500, text=f"Total: {total}", showarrow=False))
-    fig.add_annotation(go.layout.Annotation(x=col, y=total + 1000, text=f"Difference: {difference}", showarrow=False))
-
+fig.add_trace(go.Bar(x=stacked_bar_chart_data.columns, y=stacked_bar_chart_data.loc['Current Period'], name='Current Period'))
+fig.add_trace(go.Bar(x=stacked_bar_chart_data.columns, y=stacked_bar_chart_data.loc['Last Period'], name='Last Period'))
 fig.update_layout(barmode='stack', title_text="Current vs Last Period", xaxis_title="Category", yaxis_title="Amount")
 st.plotly_chart(fig)
 
@@ -73,7 +67,7 @@ order_of_categories = forecasted_change.index.tolist()
 forecasted_row = df.iloc[-1].copy()
 forecasted_row['Week'] += pd.DateOffset(years=years_forecast)
 forecasted_row[order_of_categories] = forecasted_data[order_of_categories]
-df = df.append(forecasted_row, ignore_index=True)
+df = pd.concat([df, forecasted_row], ignore_index=True)
 
 # Plot the stacked area chart with the specified order
 st.area_chart(df.set_index('Week')[order_of_categories])
@@ -97,4 +91,4 @@ st.write(df)
 # Footnote with assumptions and current goal
 st.markdown("---")
 st.markdown("**Assumptions and Current Goal:**")
-st.markdown("The current goal is set at $800,000. This amount is based on the estimated monthly living expenses of $3,500 to 4,500. The forecast and visualizations above are built on the assumptions provided through the sliders, reflecting potential investment returns, interest rates, and other financial factors.")
+st.markdown("The current goal is set at $800,000. This amount is based on the estimated monthly living expenses of $3,500 to $4,500. The forecast and visualizations above are built on the assumptions provided through the sliders, reflecting potential investment returns, interest rates, and other financial factors.")

@@ -39,7 +39,9 @@ years = st.slider('Years towards goal:', 1, 50, 10)
 interest_rate = st.slider('Expected interest rate (%):', 1, 20, 5)
 
 # Calculate the goal progress
-investment_amount = float(df.iloc[-1]['Investment Account'].replace('-', '0').replace('€', '').replace(',', ''))
+investment_amount_str = df.iloc[-1]['Investment Account']
+investment_amount_str = investment_amount_str.replace('-', '0').replace('€', '').replace(',', '')
+investment_amount = float(investment_amount_str)
 goal_progress = investment_amount
 for _ in range(years):
     goal_progress += goal_progress * (interest_rate / 100)

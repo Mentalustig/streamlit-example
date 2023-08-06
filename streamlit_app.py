@@ -34,10 +34,10 @@ bar_chart_data = pd.DataFrame({
 
 # Plot the grouped bar chart
 fig = go.Figure(data=[
-    go.Bar(name='This Period', x=bar_chart_data['Category'], y=bar_chart_data['This Period']),
-    go.Bar(name='Last Period', x=bar_chart_data['Category'], y=bar_chart_data['Last Period'])
+    go.Bar(name='This Period', x=['This Period', 'Last Period'], y=bar_chart_data['This Period']),
+    go.Bar(name='Last Period', x=['This Period', 'Last Period'], y=bar_chart_data['Last Period'])
 ])
-fig.update_layout(barmode='group')
+fig.update_layout(barmode='group', xaxis_title='Period', yaxis_title='Money', legend_title='Categories')
 st.plotly_chart(fig)
 
 # Success message and balloons
@@ -61,7 +61,7 @@ for year in range(1, years_forecast + 1):
     forecasted_data['Savings Account'] *= (1 + savings_account_interest_rate / 100)
     forecasted_data['Investment Account'] += monthly_investment_forecast * 12 * ((1 + (investment_interest_rate / 100 / 12)) ** (12 * year) - 1)
     forecasted_row = df.iloc[-1].copy()
-    forecasted_row['Week'] += pd.DateOffset(years=year)
+    forecasted_row['Week'] = forecasted_row['Week'] + pd.DateOffset(years=year)
     forecasted_row[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']] = forecasted_data[['Bank Account', 'Investment Account', 'House Dellach', 'Savings Account']]
     df = pd.concat([df, forecasted_row], ignore_index=True)
 
@@ -76,7 +76,7 @@ current_year_donut = go.Figure(data=[go.Pie(values=[current_data.sum(), GOAL - c
 current_year_donut.update_layout(title_text="Current Year")
 
 # Forecasted Year Donut
-forecasted_year_donut = go.Figure(data=[go.Pie(values=[forecasted_data['Total'].sum(), GOAL - forecasted_data['Total'].sum()], labels=['Forecasted', 'Remaining'], hole=.3)])
+forecasted_year_donut = go.Figure(data=[go.Pie(values=[forecasted_data[order_of_categories].sum().sum(), GOAL - forecasted_data[order_of_categories].sum().sum()], labels=['Forecasted', 'Remaining'], hole=.3)])
 forecasted_year_donut.update_layout(title_text="Forecasted Year")
 
 # Display donuts side by side

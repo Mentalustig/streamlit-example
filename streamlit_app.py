@@ -40,6 +40,17 @@ if total_difference >= 2000:
     st.success(f"Congratulations! This month's money is {total_difference} more than last month's sum.")
     st.balloons()
 
+# Stacked bar chart for current vs last period
+stacked_bar_data = pd.DataFrame({
+    'Category': ['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others'],
+    'Last Period': df.iloc[-2][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']],
+    'Current Period': df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']]
+}).melt(id_vars=['Category'], var_name='Period', value_name='Value')
+
+fig_stacked_bar = px.bar(stacked_bar_data, x='Category', y='Value', color='Period', barmode='stack')
+st.plotly_chart(fig_stacked_bar)
+
+
 # Inputs (at the end)
 years_forecast = st.slider("Number of Years for Forecast", 1, 30, 10)
 monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 2000)

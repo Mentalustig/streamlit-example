@@ -140,7 +140,20 @@ st.plotly_chart(fig_last_row)
 # Print data as a table (at the bottom)
 st.write(df)
 
-# Footnote with assumptions and current goal
+# Fußnote mit Annahmen und aktuellem Ziel
 st.markdown("---")
-st.markdown("**Assumptions and Current Goal:**")
-st.markdown("The current goal is set at $800,000. This amount is based on the estimated monthly living expenses of $3,500 to $4,500. The forecast and visualizations above are built on the assumptions provided through the sliders, reflecting potential investment returns, interest rates, and other financial factors.")
+st.markdown("**Annahmen und aktuelles Ziel:**")
+st.markdown("""
+Das derzeitige Ziel von 800.000€ basiert auf den geschätzten monatlichen Lebenshaltungskosten von 3.500€ bis 4.500€. Die Prognose und Visualisierungen oben wurden anhand der Annahmen erstellt, die durch die Schieberegler bereitgestellt wurden, und spiegeln potenzielle Anlageerträge, Zinssätze und andere finanzielle Faktoren wider.
+""")
+
+st.markdown("""
+Die folgenden Entnahmebeträge pro Monat könnten mit unterschiedlichen Anlagezielen erreicht werden:
+- **600.000€ Ziel:** Monatliche Entnahme von 3.700€
+- **800.000€ Ziel:** Monatliche Entnahme von 4.900€
+- **1.000.000€ Ziel:** Monatliche Entnahme von 6.200€
+
+Diese Beträge beinhalten bereits die Miete in Deutschland von 400€ pro Monat und die private Krankenversicherung von 400€ bis 600€ pro Monat.
+
+[Link zur detaillierten Erklärung](https://www.finanzfluss.de/rechner/entnahmeplan/?i=%5B%7B%22n%22%3A%22cn%22%2C%22v%22%3A%22Entnahmebetrag%22%7D%2C%7B%22n%22%3A%22ca%22%2C%22v%22%3A800000%7D%2C%7B%22n%22%3A%22wa%22%2C%22v%22%3A1200%7D%2C%7B%22n%22%3A%22ir%22%2C%22v%22%3A7%7D%2C%7B%22n%22%3A%22wi%22%2C%22v%22%3A0%7D%2C%7B%22n%22%3A%22cc%22%2C%22v%22%3Atrue%7D%2C%7B%22n%22%3A%22wp%22%2C%22v%22%3A35%7D%5D)
+""")

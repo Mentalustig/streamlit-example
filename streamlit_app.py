@@ -129,12 +129,9 @@ for index, row in every_second_year.iterrows():
 # Assume last_historical_date is extracted from your DataFrame as before
 last_historical_date = df.iloc[original_length - 1]['Week']
 
-# If last_historical_date is not already a datetime object, convert it
-if not isinstance(last_historical_date, datetime):
-    last_historical_date = pd.to_datetime(last_historical_date)
-
 # Add vertical line using the datetime object
-fig_area_chart.add_vline(x=last_historical_date, line_dash="dash", line_color="red", annotation_text="Forecast Starts", annotation_position="top left")
+last_historical_date_str = last_historical_date.strftime('%Y-%m-%d')
+fig_area_chart.add_vline(x=last_historical_date_str, line_dash="dash", line_color="red", annotation_text="Forecast Starts", annotation_position="top left")
 
 # Get forecasted data
 forecasted_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()

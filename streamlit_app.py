@@ -112,6 +112,31 @@ for i in range(years_forecast):
 for col in df.columns[1:]:
     df[col] = df[col].replace(',', '', regex=True).astype(float)
 
+# Get the last row except the 'Week' and 'Year' columns
+last_row_data = df.iloc[-1][1:-1]
+
+# Create a DataFrame suitable for a bar chart
+bar_data_last_row = pd.DataFrame({
+    'Category': last_row_data.index,
+    'Value': last_row_data.values
+})
+
+# Create a Plotly Express bar chart
+fig_last_row = px.bar(bar_data_last_row, x='Category', y='Value')
+
+# Add annotation for the sum at the top of the bar
+total_sum_last_row = last_row_data.sum()
+fig_last_row.add_annotation(x=bar_data_last_row['Category'].iloc[-1], y=total_sum_last_row, 
+                            text=f"Total: {total_sum_last_row:,.0f}", showarrow=False, 
+                            font=dict(size=14))
+
+# Update the layout as per your preference
+fig_last_row.update_layout(height=300)
+
+# Display the bar chart in Streamlit
+st.plotly_chart(fig_last_row)
+
+
 # Print data as a table (at the bottom)
 st.write(df)
 

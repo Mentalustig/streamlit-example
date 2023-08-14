@@ -112,51 +112,6 @@ for i in range(years_forecast):
 for col in df.columns[1:]:
     df[col] = df[col].replace(',', '', regex=True).astype(float)
 
-# Create a stacked area chart
-fig_area_chart = px.area(df, x='Week', y=df.columns[1:], title='Stacked Area Chart')
-
-# Extracting every second year from the DataFrame
-df['Year'] = pd.to_datetime(df['Week']).dt.year
-every_second_year = df[df['Year'] % 2 == 0]
-
-# Stacked area chart annotations for every second year
-for index, row in every_second_year.iterrows():
-    # Calculate the total sum for the current row
-    total_sum = round_to_100(row[1:].sum())
-    # Add an annotation at the corresponding X value with the total sum
-    fig_area_chart.add_annotation(x=row['Week'], y=total_sum, text=f"{total_sum:,.0f}", showarrow=False, font=dict(size=14))
-
-# Assume last_historical_date is extracted from your DataFrame as before
-last_historical_date = df.iloc[original_length - 1]['Week']
-
-# Add vertical line using the datetime object
-last_historical_date_str = last_historical_date.strftime('%Y-%m-%d')
-fig_area_chart.add_vline(x=last_historical_date_str, line_dash="dash", line_color="red", annotation_text="Forecast Starts", annotation_position="top left")
-
-# Get forecasted data
-forecasted_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()
-
-# Define the colors
-dark_blue = 'rgb(0, 51, 204)'
-light_blue = 'rgb(153, 204, 255)'
-
-# Current Year Donut
-current_values = [current_data, max(0, GOAL - current_data)]
-current_labels = ['What I own', 'Remaining']
-fig_donut_current = go.Figure(data=[go.Pie(values=current_values, labels=current_labels, hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=0, direction='clockwise')])
-fig_donut_current.update_layout(title_text="Current Year", height=350, width=350)
-
-# Forecasted Year Donut
-forecasted_values = [forecasted_data, max(0, GOAL - forecasted_data)]
-forecasted_labels = ['What I own', 'Remaining']
-fig_donut_forecasted = go.Figure(data=[go.Pie(values=forecasted_values, labels=forecasted_labels, hole=.3, marker=dict(colors=[dark_blue, light_blue]), rotation=0, direction='counterclockwise')])
-fig_donut_forecasted.update_layout(title_text="Forecasted Year", height=350, width=350)
-
-# Display donuts side by side
-col1, col2 = st.columns(2)
-col1.plotly_chart(fig_donut_current)
-col2.plotly_chart(fig_donut_forecasted)
-
 # Print data as a table (at the bottom)
 st.write(df)
 

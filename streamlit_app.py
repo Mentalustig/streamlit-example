@@ -129,9 +129,11 @@ for index, row in every_second_year.iterrows():
 # Get the last historical date using the original_length
 last_historical_date = df.iloc[original_length - 1]['Week']
 
-# Add vertical line to separate historical and forecasted data
-fig_area_chart.add_vline(x=last_historical_date, line_dash="dash", line_color="red", annotation_text="Forecast Starts", annotation_position="top left")
-st.plotly_chart(fig_area_chart)
+# Convert the last_historical_date to a string
+last_historical_date_str = str(last_historical_date)
+
+# Add vertical line to separate historical and forecasted data using the converted string
+fig_area_chart.add_vline(x=last_historical_date_str, line_dash="dash", line_color="red", annotation_text="Forecast Starts", annotation_position="top left")
 
 # Get forecasted data
 forecasted_data = df.iloc[-1][['Bank Account', 'Investment Account', 'Inheritance', 'House Dellach', 'Savings Account', 'Others']].sum()

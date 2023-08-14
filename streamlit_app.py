@@ -88,9 +88,9 @@ st.plotly_chart(fig_stacked_bar)
 # Inputs (at the end)
 years_forecast = st.slider("Number of Years for Forecast", 1, 20, 7)
 monthly_investment_forecast = st.slider("Monthly Investment Forecast", 0, 6000, 2500)
-investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 6)
+investment_interest_rate = st.slider("Investment Interest Rate (%)", 0, 10, 7)
 house_dellach_interest_rate = st.slider("House Dellach Interest Rate (%)", 0, 10, 2)
-savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 4.6)
+savings_account_interest_rate = st.slider("Savings Account Interest Rate (%)", 0, 10, 5)
 
 
 # Forecasted data for each year
